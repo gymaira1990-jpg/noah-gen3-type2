@@ -29,7 +29,7 @@ STEWARD_CONFIG = {
     "trigger_interval_rounds": 5,       # 每N轮触发一次
     "glm_temperature": 0.1,
     "max_summary_tokens": 800,
-    "pg_conn_string": "psql -U gcat -d noah_local -t -A",
+    "pg_conn_string": "psql -U <user> -d noah_local -t -A",
 }
 
 

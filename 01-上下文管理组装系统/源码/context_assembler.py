@@ -27,7 +27,7 @@ ASSEMBLER_CONFIG = {
     "max_tokens": 13000,          # 上限 13K tok
     "reserve_tokens": 2000,       # 预留空间(给后续 session context)
     "vec_search_top_k": 5,        # 向量搜索返回条数
-    "pg_conn": "psql -U gcat -d noah_local -t -A",
+    "pg_conn": "psql -U <user> -d noah_local -t -A",
 }
 
 
