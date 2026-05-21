@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOAH-PRIME · 原初铸造世界</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0c;color:#c8c8c8;font-family:'Segoe UI',system-ui,sans-serif;height:100vh;display:flex;overflow:hidden}
+#left-panel{width:24%;min-width:200px;display:flex;flex-direction:column;border-right:1px solid #2a2a30;position:relative}
+#town-box{flex:0 0 52%;border-bottom:2px solid #c9a84c;position:relative;overflow:hidden}
+#town-canvas{width:100%;height:100%;display:block}
+#dash-box{flex:1;padding:6px 8px;overflow-y:auto;background:#141418;font-size:.62em}
+.dash-row{display:flex;justify-content:space-between;padding:4px 6px;border-bottom:1px solid #1a1a24}
+.dash-row .dl{color:#6a6a6a}
+.dash-row .dv{color:#c9a84c;font-family:monospace;font-weight:bold}
+.dash-section{color:#8a7330;font-size:.7em;padding:8px 6px 2px;letter-spacing:1px;border-top:1px solid #1a1a24;margin-top:2px}
+
+#center-panel{flex:1;display:flex;flex-direction:column;min-width:320px}
+#chat-header{background:linear-gradient(180deg,#1a1a24,#141418);border-bottom:1px solid #8a7330;padding:6px 10px;display:flex;align-items:center;gap:8px;font-family:Georgia,serif}
+#chat-header h2{font-size:.85em;color:#c9a84c;letter-spacing:1px}
+#task-zone{background:#111118;border-bottom:1px solid #2a2a30;padding:6px 8px;min-height:32px;max-height:80px;overflow-y:auto;display:flex;gap:5px;flex-wrap:wrap}
+.task-card{background:#1a1a24;border:1px solid #3a3a30;border-radius:3px;padding:3px 8px;font-size:.6em;display:flex;align-items:center;gap:4px;white-space:nowrap;animation:fadeIn .3s}
+.task-card.active{border-color:#c9a84c;background:#1a1a2a}
+.task-card .ts{font-size:.9em}
+#chat-messages{flex:1;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth}
+.msg{padding:6px 10px;border-radius:5px;max-width:85%;line-height:1.4;font-size:.8em;animation:fadeIn .3s;word-break:break-word}
+.msg.user{background:#1a2a3a;border:1px solid #2a3a4a;align-self:flex-end}
+.msg.noah{background:#14141a;border:1px solid #8a7330;align-self:flex-start;border-left:3px solid #c9a84c}
+.progress-card{background:#111118;border:1px solid #2a2a30;border-radius:4px;padding:6px 8px;margin:4px 0;font-size:.68em;align-self:stretch}
+.progress-card .pc-title{color:#8a7330;margin-bottom:4px}
+.progress-card .pc-step{display:flex;align-items:center;gap:4px;padding:2px 0}
+.progress-card .pc-step.done{color:#6a6a6a;text-decoration:line-through}
+.progress-card .pc-step.active{color:#c9a84c}
+.think-toggle{font-size:.6em;color:#8a7330;cursor:pointer;margin-top:2px;user-select:none}
+.think-content{font-size:.65em;color:#6a6a6a;background:#0a0a0c;padding:4px 6px;border-radius:3px;margin-top:2px;white-space:pre-wrap}
+#chat-input-area{background:#1a1a22;border-top:1px solid #2a2a30;padding:6px 10px;display:flex;gap:5px;align-items:flex-end}
+#chat-input-area textarea{flex:1;background:#0a0a0c;border:1px solid #2a2a30;color:#c8c8c8;padding:6px;border-radius:4px;resize:none;outline:none;font-size:.8em}
+#chat-input-area textarea:focus{border-color:#c9a84c}
+#chat-input-area button{background:linear-gradient(180deg,#2a2a34,#1a1a24);border:1px solid #8a7330;color:#c9a84c;padding:6px 12px;border-radius:4px;cursor:pointer;font-family:Georgia,serif;font-size:.8em;white-space:nowrap}
+#chat-input-area button:hover{border-color:#c9a84c}
+#chat-status{background:#1a1a22;padding:2px 10px;font-size:.6em;color:#6a6a6a;border-top:1px solid #2a2a30;display:flex;gap:10px}
+
+/* 右栏 */
+#right-panel{width:22%;min-width:170px;display:flex;flex-direction:column;border-left:1px solid #2a2a30;background:#141418;position:relative}
+.rhdr{font-family:Georgia,serif;color:#c9a84c;font-size:.7em;padding:8px;border-bottom:1px solid #2a2a30;display:flex;justify-content:space-between;align-items:center}
+.rhdr button{background:none;border:1px solid #2a2a30;color:#8a7330;cursor:pointer;font-size:.8em;padding:1px 6px;border-radius:3px}
+#project-list{flex:1;overflow-y:auto;padding:4px}
+.section-label{color:#6a6a6a;font-size:.55em;text-transform:uppercase;padding:6px 4px 2px}
+.proj-card{background:#1a1a24;border:1px solid #2a2a30;border-radius:3px;padding:5px;margin-bottom:3px;font-size:.6em}
+.proj-card .pn{color:#ddd}
+.proj-card .ps{color:#c9a84c;font-size:.8em}
+.empty-state{text-align:center;color:#4a4a4a;padding:15px 5px;font-size:.65em}
+
+/* 浮动展开按钮 */
+#float-toggle{position:fixed;right:4px;top:50%;transform:translateY(-50%);background:#1a1a24;border:1px solid #8a7330;color:#c9a84c;padding:8px 5px;border-radius:4px 0 0 4px;cursor:pointer;font-size:.8em;z-index:100;display:none;writing-mode:vertical-rl}
+
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:#0a0a0c}
+::-webkit-scrollbar-thumb{background:#2a2a30;border-radius:2px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.spin{animation:spin 1.5s linear infinite;display:inline-block}
+</style>
+</head>
+<body>
+
+<div id="left-panel">
+  <div id="town-box"><canvas id="town-canvas"></canvas></div>
+  <div id="dash-box">
+    <div class="dash-section">📊 消耗</div>
+    <div class="dash-row"><span class="dl">今日Token</span><span class="dv" id="dash-today">0</span></div>
+    <div class="dash-row"><span class="dl">本月Token</span><span class="dv" id="dash-month">0</span></div>
+    <div class="dash-row"><span class="dl">今日调用</span><span class="dv" id="dash-calls">0次</span></div>
+    <div class="dash-row"><span class="dl">预算剩余</span><span class="dv" id="dash-budget">¥500</span></div>
+    <div class="dash-section">🛡️ 自检</div>
+    <div class="dash-row"><span class="dl">管道</span><span class="dv" id="dash-pipe" style="color:#4a4">◆</span></div>
+    <div class="dash-row"><span class="dl">模型</span><span class="dv" id="dash-model" style="color:#4a4">◆</span></div>
+    <div class="dash-row"><span class="dl">远征堡垒</span><span class="dv" id="dash-gz" style="color:#6a6">—</span></div>
+    <div class="dash-section">🧠 沉思者</div>
+    <div class="dash-row"><span class="dl">记忆条目</span><span class="dv" id="dash-mem">—</span></div>
+    <div class="dash-row"><span class="dl">工具就绪</span><span class="dv" id="dash-tools">—</span></div>
+  </div>
+</div>
+
+<div id="center-panel">
+  <div id="chat-header">
+    <h2>⚙ NOAH-PRIME</h2>
+    <span style="font-size:.6em;color:#6a6a6a">原初铸造世界</span>
+  </div>
+  <div id="task-zone"><div class="empty-state" style="padding:6px;width:100%">暂无活跃诏令</div></div>
+  <div id="chat-messages"></div>
+  <div id="chat-input-area">
+    <textarea id="userInput" placeholder="输入圣典诏令..." rows="2" autofocus></textarea>
+    <button id="sendBtn">▶</button>
+  </div>
+  <div id="chat-status"><span>◆ 就绪</span></div>
+</div>
+
+<div id="right-panel">
+  <div class="rhdr">📋 圣典诏令 <button id="right-toggle" onclick="toggleRight()" style="font-size:.7em">◀</button></div>
+  <div id="project-list">
+    <div class="section-label">⚙ 进行中</div>
+    <div id="active-tickets"><div class="empty-state">暂无</div></div>
+    <div class="section-label">⏳ 已排队</div>
+    <div id="queued-tickets"><div class="empty-state">暂无</div></div>
+    <div class="section-label">✅ 最近完成</div>
+    <div id="done-tickets"><div class="empty-state">暂无</div></div>
+  </div>
+</div>
+
+<button id="float-toggle" onclick="toggleRight()">▶ 展开面板</button>
+
+<script>
+// ═══════════════════════════════════
+// 小镇引擎
+// ═══════════════════════════════════
+
+function toggleRight(){
+  const p=document.getElementById('right-panel');
+  const btn=document.getElementById('float-toggle');
+  const hdr=document.getElementById('right-toggle');
+  if(p.style.display==='none'){
+    p.style.display='flex';btn.style.display='none';
+    if(hdr)hdr.textContent='◀';
+  }else{
+    p.style.display='none';btn.style.display='block';
+    if(hdr)hdr.textContent='▶';
+  }
+}
+
+const canvas=document.getElementById('town-canvas'),ctx=canvas.getContext('2d');
+let W=220,H=170;
+function rt(){const b=document.getElementById('town-box');W=canvas.width=b.clientWidth;H=canvas.height=b.clientHeight}
+window.addEventListener('resize',rt);rt();
+
+const P={sky:['#1a1a30','#2a2a44','#3a3a50','#252538'],grd:'#3a4a32',npc:['#ffcc44','#8899cc','#999999','#cc8888']};
+const blds=[{n:'沉思圣殿',x:.06,y:.53,w:44,h:34,l:0,t:0},{n:'铸造圣所',x:.23,y:.48,w:50,h:40,l:0,t:0},{n:'星语庭',x:.42,y:.43,w:58,h:46,l:0,t:0},{n:'圣像室',x:.63,y:.53,w:44,h:34,l:0,t:0},{n:'审判之门',x:.81,y:.51,w:40,h:36,l:0,t:0}];
+const npcs=[
+  {n:'诺亚',x:.46,y:.34,tx:.46,ty:.34,c:P.npc[0],s:'idle',b:'',bt:0,it:0,sp:.0004},
+  {n:'沉思者',x:.12,y:.40,tx:.12,ty:.40,c:P.npc[1],s:'idle',b:'',bt:0,it:0,sp:.00025},
+  {n:'审判官',x:.86,y:.40,tx:.86,ty:.40,c:P.npc[2],s:'idle',b:'',bt:0,it:10000,sp:.00015},
+  {n:'圣像师',x:.70,y:.40,tx:.70,ty:.40,c:P.npc[3],s:'idle',b:'',bt:0,it:6000,sp:.0003},
+];
+const cats=[{x:.22,y:.61,v:.03,c:'#cc9966'},{x:.68,y:.63,v:-.02,c:'#ddaa77'}];
+let dtick=0,rl=0,rtgt=0;
+const trees=[],fls=[];
+for(let i=0;i<5;i++)trees.push({x:.03+Math.random()*.92,y:.50+Math.random()*.1,s:5+Math.random()*7});
+for(let i=0;i<10;i++)fls.push({x:Math.random(),y:.58+Math.random()*.05,c:['#cc8866','#cccc66','#cc6688'][i%3],p:Math.random()*Math.PI*2});
+
+function drnpc(n,x,y){
+  const s=1.4;
+  ctx.fillStyle='rgba(0,0,0,.1)';ctx.ellipse(x,y+9*s,4*s,1.5*s,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=n.c;ctx.fillRect(x-4*s,y-5*s,8*s,13*s);
+  ctx.fillStyle='#ddccaa';ctx.fillRect(x-3*s,y-10*s,6*s,6*s);
+  ctx.fillStyle='#aa9966';
+  if(n.s==='walking'){ctx.fillRect(x-3*s,y+8*s,3*s,3*s);ctx.fillRect(x+1,y+8*s,3*s,3*s)}
+  else ctx.fillRect(x-2*s,y+8*s,4*s,2*s);
+  if(n.b&&n.bt>0){const ba=n.bt<1500?n.bt/1500:1,bw=Math.max(110,n.b.length*7+22),bh=22;ctx.globalAlpha=ba;ctx.fillStyle='#fff';ctx.fillRect(x-bw/2,y-13*s-bh-3,bw,bh);ctx.fillStyle='#000';ctx.font='bold 11px monospace';ctx.fillText(n.b,x-bw/2+4,y-13*s-5);ctx.globalAlpha=1}
+  ctx.fillStyle='#aaa';ctx.font='8px monospace';ctx.fillText(n.n,x-12,y+15*s);
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  const si=Math.floor(dtick/3600)%4,g=ctx.createLinearGradient(0,0,0,H*.55);
+  g.addColorStop(0,P.sky[si]);g.addColorStop(1,P.sky[(si+1)%4]);ctx.fillStyle=g;ctx.fillRect(0,0,W,H*.55);
+  const sp=(dtick%4800)/4800;ctx.globalAlpha=.5*(sp<.5?1:1-Math.abs(sp-.5)*2);ctx.fillStyle=dtick%4800<2400?'#ffdd88':'#aaccee';ctx.beginPath();ctx.arc(W*(.12+sp*.76),H*(.02+Math.sin(sp*Math.PI)*.08),7,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  ctx.fillStyle='#2a3038';ctx.beginPath();ctx.moveTo(0,H*.55);ctx.quadraticCurveTo(W*.3,H*.47,W*.5,H*.51);ctx.quadraticCurveTo(W*.7,H*.45,W,H*.53);ctx.lineTo(W,H*.58);ctx.lineTo(0,H*.58);ctx.fill();
+  ctx.fillStyle=P.grd;ctx.fillRect(0,H*.57,W,H*.43);ctx.fillStyle='#4a5a3a';ctx.fillRect(0,H*.57,W,2);
+  trees.forEach(t=>{ctx.fillStyle='#4a3a2a';ctx.fillRect(W*t.x,H*t.y-4,2,7);ctx.fillStyle='#3a5a3a';ctx.beginPath();ctx.arc(W*t.x+1,H*t.y-5,t.s,0,Math.PI*2);ctx.fill()});
+  fls.forEach(f=>{const sc=.5+Math.sin(f.p+dtick/2000)*.5;ctx.fillStyle=f.c;ctx.fillRect(W*f.x,H*f.y,2*sc,2*sc)});
+  blds.forEach(b=>{b.l+=(b.t-b.l)*.04;const bx=W*b.x,by=H*b.y,gw=b.l*(.7+Math.sin(dtick/600)*.3);ctx.fillStyle='#3a3828';ctx.fillRect(bx,by-b.h,b.w,b.h);ctx.fillStyle='#5a4a34';ctx.fillRect(bx-2,by-b.h-3,b.w+4,4);ctx.fillStyle='rgba(221,187,85,'+(gw*.8)+')';ctx.fillRect(bx+5,by-b.h+5,7,7);ctx.fillRect(bx+b.w-12,by-b.h+5,7,7);ctx.fillStyle='#aaccaa';ctx.font='7px monospace';ctx.fillText(b.n,bx+3,by+11)});
+  npcs.forEach(n=>drnpc(n,W*n.x,H*n.y));
+  cats.forEach(a=>{ctx.fillStyle=a.c;ctx.fillRect(W*a.x-2,W*a.y-1.5,5,3);ctx.fillStyle='#ddccaa';ctx.fillRect(W*a.x-1.5,W*a.y-5,4,2.5)});
+  rl+=(rtgt-rl)*.003;if(rl>.1){ctx.globalAlpha=rl*.2;ctx.strokeStyle='#8899bb';ctx.lineWidth=.5;for(let i=0;i<4;i++){const rx=Math.random()*W,ry=Math.random()*H*.55;ctx.beginPath();ctx.moveTo(rx,ry);ctx.lineTo(rx-1,ry+5);ctx.stroke()}ctx.globalAlpha=1}
+}
+
+function upd(dt){
+  dtick+=dt;if(Math.random()<.00005)rtgt=Math.random()<.5?0:.2+Math.random()*.4;
+  npcs.forEach(n=>{if(n.bt>0)n.bt-=dt;if(n.s==='walking'){const dx=n.tx-n.x,dy=n.ty-n.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<.002){n.x=n.tx;n.y=n.ty;n.s='idle';n.it=0}else{const sp=n.sp*(dist*6+.2);n.x+=dx/Math.max(dist,.001)*sp;n.y+=dy/Math.max(dist,.001)*sp}}if(n.s==='idle'){n.it+=dt;if(n.it>18000&&Math.random()<.006){n.tx=n.x+(Math.random()-.5)*.03;n.s='walking'}}});
+  cats.forEach(a=>{a.x+=a.v*dt/1000;if(a.x>.94||a.x<.04)a.v*=-1});fls.forEach(f=>f.p+=dt/4000);
+}
+
+// NPC动画映射
+function npcAction(npcIdx,action){
+  const n=npcs[npcIdx],acts={
+    search:['在圣典中搜寻...','翻阅古老卷轴...'],
+    read:['找到了！让我看看...','仔细研读中...'],
+    think:['万机之神指引...','运转齿轮思考中...'],
+    done:['任务完成！','汇报结果...']
+  };
+  const msgs=acts[action]||['工作中...'];
+  n.b=msgs[Math.floor(Math.random()*msgs.length)];n.bt=8000;
+  if(action==='search'){n.tx=n.x+(Math.random()-.5)*.04;n.s='walking';n.bt=10000}
+  if(action==='read')setTimeout(()=>{n.b='';n.b=msgs[1];n.bt=6000},5000);
+}
+
+function taskAnim(){const b=npcs[0];b.b='收到诏令';b.bt=10000;setTimeout(()=>{b.tx=.44;b.ty=.46;b.s='walking'},1500);setTimeout(()=>{blds[2].t=1;npcAction(1,'search')},3500);setTimeout(()=>{blds[2].t=0;b.tx=b.x;b.ty=b.y;b.s='walking';setTimeout(()=>{b.b='诏令完成';b.bt=10000},3000)},7000)}
+
+// ═══════════════════════════════════
+// 仪表盘
+// ═══════════════════════════════════
+async async function showStatusCard(){
+  try{
+    const d=await(await fetch('/api/status/snapshot')).json();
+    const card=document.createElement('div');
+    card.className='msg noah';
+    card.style.cssText='align-self:stretch;border-left:3px solid #c9a84c;background:#0e0e14;margin:4px 0';
+    const icons={system_ops:'🔧',code_generation:'💻',creative_writing:'📖',emotional_chat:'💬',analysis_report:'📊'};
+    card.innerHTML='<div style="font-size:.65em;color:#8a7330;margin-bottom:4px">📊 系统状态</div>'+
+      (d.active_projects&&d.active_projects.length?'<div style="font-size:.6em;margin:2px 0"><b>⚙️ 活跃:</b> '+d.active_projects.map(p=>'<span style="margin:0 4px">'+(icons[p.status]||'📋')+' '+(p.ticket_id||'')+'</span>').join('')+'</div>':'')+
+      (d.queued_tasks&&d.queued_tasks.length?'<div style="font-size:.6em;margin:2px 0"><b>⏳ 排队:</b> '+d.queued_tasks.map(t=>t.ticket_id||'').join(', ')+'</div>':'')+
+      '<div style="font-size:.6em;margin:2px 0"><b>🖥️ 资源:</b> Token '+d.tokens+' | 调用 '+d.calls+'次 | 记忆 '+d.memory+'条</div>'+
+      (d.suggestions&&d.suggestions.length?'<div style="font-size:.6em;margin:2px 0;color:#888"><b>💡</b> '+d.suggestions.slice(0,2).join(' · ')+'</div>':'');
+    document.getElementById('chat-messages').appendChild(card);
+    document.getElementById('chat-messages').scrollTop=document.getElementById('chat-messages').scrollHeight;
+  }catch(e){}
+}
+
+async function refreshDash(){
+  try{
+    const d=await(await fetch('/api/status/snapshot')).json();
+    document.getElementById('dash-today').textContent=(d.tokens||0).toLocaleString();
+    document.getElementById('dash-calls').textContent=(d.calls||0)+'次';
+    document.getElementById('dash-mem').textContent=(d.memory||0)+'条';
+    document.getElementById('dash-tools').textContent=(d.tools||'—')+'个';
+    document.getElementById('dash-pipe').style.color='#4a4';
+  }catch(e){}
+}
+setInterval(refreshDash,20000);refreshDash();
+
+// ═══════════════════════════════════
+// 对话
+// ═══════════════════════════════════
+const chatMsgs=document.getElementById('chat-messages');
+const userInput=document.getElementById('userInput');
+const taskZone=document.getElementById('task-zone');
+let tokenCount=0,monthTokens=0,doneTickets=[];
+
+function addMsg(role,text,think){
+  const d=document.createElement('div');d.className='msg '+role;
+  d.innerHTML=mdRender(text);  // Markdown渲染
+  if(think&&role==='noah'){const btn=document.createElement('div');btn.className='think-toggle';btn.textContent='💭 思考过程';const td=document.createElement('div');td.className='think-content';td.textContent=think;td.style.display='none';btn.addEventListener('click',()=>{const v=td.style.display==='none';td.style.display=v?'block':'none';btn.textContent=v?'💭 收起':'💭 思考过程'});d.appendChild(btn);d.appendChild(td)}
+  chatMsgs.appendChild(d);chatMsgs.scrollTop=chatMsgs.scrollHeight;
+  // 服务器端已有logger.py自动保存·无需前端存储
+}
+
+// Markdown渲染
+function mdRender(t){
+  if(!t)return'';
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+   .replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+   .replace(/\*(.+?)\*/g,'<i>$1</i>')
+   .replace(/`([^`]+)`/g,'<code style="background:#1a1a24;padding:1px 4px;border-radius:3px">$1</code>')
+   .replace(/\n/g,'<br>')
+   .replace(/\|(.+)\|/g,(m)=>{if(m.includes('---'))return'<hr>';const cells=m.split('|').filter(c=>c.trim());return'<div style="display:flex;gap:8px">'+cells.map(c=>'<span>'+c.trim()+'</span>').join('')+'</div>'});
+}
+
+// 聊天历史:从服务器API加载(永久存储·如QQ聊天记录)
+let chatOffset=0,chatHasMore=true;
+async function loadHistory(){
+  try{
+    const r=await(await fetch(`/api/chat/history?offset=0&limit=50`)).json();
+    chatOffset=r.messages.length;chatHasMore=r.has_more;
+    r.messages.reverse().forEach(m=>addMsg(m.role,m.text));
+  }catch(e){}
+}
+// 无限滚动:上滚加载更多
+function setupInfiniteScroll(){
+  const box=document.getElementById('chat-messages');
+  box.addEventListener('scroll',async()=>{
+    if(box.scrollTop<100&&chatHasMore){
+      const prevH=box.scrollHeight;
+      try{
+        const r=await(await fetch(`/api/chat/history?offset=${chatOffset}&limit=30`)).json();
+        if(r.messages.length){
+          chatOffset+=r.messages.length;chatHasMore=r.hasMore;
+          const frag=document.createDocumentFragment();
+          r.messages.reverse().forEach(m=>{const d=document.createElement('div');d.className='msg '+m.role;d.innerHTML=mdRender(m.text);frag.prepend(d)});
+          box.prepend(frag);box.scrollTop=box.scrollHeight-prevH;
+        }
+      }catch(e){}
+    }
+  });
+}
+
+function addProgressCard(ticket){
+  const steps=ticket.task_layer?.sub_tasks||['分析需求','搜索资料','生成方案','审核交付'];
+  const card=document.createElement('div');card.className='progress-card';card.id='pc-'+ticket.ticket_id;
+  card.innerHTML='<div class="pc-title">⚙ '+ (ticket.ticket_id||'诏令')+' · '+(ticket.task_layer?.primary_intent?.substring(0,20)||'执行中')+'</div>';
+  steps.forEach((s,i)=>{card.innerHTML+='<div class="pc-step" id="step-'+ticket.ticket_id+'-'+i+'"><span>⏳</span> '+s+'</div>'});
+  chatMsgs.appendChild(card);
+  // 动画: 逐步点亮
+  let si=0;
+  function nextStep(){
+    if(si>=steps.length)return;
+    const el=document.getElementById('step-'+ticket.ticket_id+'-'+si);
+    if(el){el.classList.add('active');el.innerHTML='<span class="spin">⚙</span> '+steps[si]}
+    setTimeout(()=>{
+      if(el){el.classList.add('done');el.classList.remove('active');el.innerHTML='<span>✅</span> '+steps[si]}
+      si++;nextStep();
+    },2000);
+  }
+  setTimeout(nextStep,500);
+  chatMsgs.scrollTop=chatMsgs.scrollHeight;
+}
+
+async function send(){
+  const text=userInput.value.trim();if(!text)return;
+  addMsg('user',text);userInput.value='';
+  document.getElementById('chat-status').children[0].textContent='⚙ 星语庭通联中...';
+  taskAnim();
+  npcs.forEach(n=>{if(Math.random()<.35&&n.phrases){n.b=n.phrases[Math.floor(Math.random()*n.phrases.length)];n.bt=9000}});
+  try{
+    const resp=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text})});
+    const d=await resp.json();
+    if(d.reply)addMsg('noah',d.reply,d.tickets&&d.tickets.length?'【诺亚·原初 思考过程】\n▸ 思绪整理: '+d.tickets.length+'个碎片\n▸ 工单分发: '+(d.tickets[0].task_type_tag||'?')+'\n▸ 审判官审查: 通过\n▸ 星语庭决策: 已生成\n▸ 沉思者阵列: 已沉淀':null);
+    if(d.tokens_used){tokenCount+=d.tokens_used;monthTokens+=d.tokens_used;document.getElementById('dash-today').textContent=tokenCount.toLocaleString();document.getElementById('dash-month').textContent=monthTokens.toLocaleString()}
+    if(d.tickets&&d.tickets.length){
+      taskZone.innerHTML='';
+      d.tickets.forEach(t=>{
+        addProgressCard(t);
+        taskZone.innerHTML+='<div class="task-card active"><span class="ts">⚙</span> '+(t.ticket_id||'')+' <span style="color:#6a6a6a">'+(t.task_layer?.primary_intent?.substring(0,12)||'')+'</span></div>';
+        doneTickets.push({id:t.ticket_id,status:'✅',time:new Date().toLocaleTimeString()});
+      });
+      if(doneTickets.length>10)doneTickets=doneTickets.slice(-10);
+      document.getElementById('active-tickets').innerHTML=d.tickets.map(t=>'<div class="proj-card"><div class="pn">'+(t.ticket_id||'')+'</div><div class="ps">'+(t.task_type_tag||'—')+'</div></div>').join('');
+      document.getElementById('done-tickets').innerHTML=doneTickets.slice(-5).map(t=>'<div class="proj-card"><div class="pn">'+t.id+'</div><div class="ps">'+t.status+' '+t.time+'</div></div>').join('');
+      npcs[0].b='📢 新诏令!';npcs[0].bt=10000;
+    }
+    document.getElementById('chat-status').children[0].textContent='◆ 就绪';
+  }catch(e){addMsg('system','星语庭通讯中断');document.getElementById('chat-status').children[0].textContent='◆ 通讯失败'}
+}
+
+document.getElementById('sendBtn').addEventListener('click',send);
+userInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
+
+let lt=0;function loop(ts){const dt=Math.min(ts-lt,50);lt=ts;upd(dt);draw();requestAnimationFrame(loop)}
+rt();setupInfiniteScroll();addMsg('noah','万机之神见证。原初铸造世界已就绪。');loadHistory();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

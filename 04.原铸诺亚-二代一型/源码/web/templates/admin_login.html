@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><title>NOAH-PRIME · 审判庭登录</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0c;display:flex;align-items:center;justify-content:center;height:100vh;font-family:'Segoe UI',system-ui,sans-serif}
+.box{background:#111118;border:2px solid #8a7330;border-radius:8px;padding:30px;width:380px;text-align:center}
+h2{color:#c9a84c;font-family:Georgia,serif;font-size:16px;margin-bottom:20px}
+input{width:100%;padding:10px;background:#08080c;border:1px solid #222;color:#ccc;border-radius:4px;margin-bottom:10px;font-size:13px}
+input:focus{border-color:#c9a84c;outline:none}
+button{width:100%;background:linear-gradient(180deg,#1e1e2a,#111118);border:1px solid #8a7330;color:#c9a84c;padding:10px;border-radius:4px;cursor:pointer;font-family:Georgia,serif;font-size:13px;margin-bottom:8px}
+button:hover{border-color:#c9a84c}
+button.skip{background:transparent;border:1px solid #222;color:#888;font-size:11px}
+#error{color:#a33;font-size:11px;margin-top:6px}
+label{color:#888;font-size:11px;display:block;text-align:left;margin-bottom:10px}
+label input{margin-right:6px;width:auto}
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>⚙ 铸造圣殿 · 审判庭认证</h2>
+  <div id="login-form">
+    <input type="password" id="password" placeholder="输入圣典密码">
+    <button onclick="login()">进入管理终端</button>
+    <button class="skip" onclick="skipLogin()">跳过登录 · 直接进入</button>
+  </div>
+  <div id="change-form" style="display:none">
+    <input type="password" id="old-pw" placeholder="当前密码">
+    <input type="password" id="new-pw" placeholder="新密码">
+    <input type="password" id="new-pw2" placeholder="确认新密码">
+    <button onclick="changePw()">修改密码</button>
+    <button class="skip" onclick="showLogin()">返回登录</button>
+  </div>
+  <p id="error"></p>
+  <p style="color:#555;font-size:9px;margin-top:10px">
+    <a href="#" onclick="showChange()" style="color:#555">修改密码</a> · 
+    自用模式: 跳过登录直接进入
+  </p>
+</div>
+<script>
+function showChange(){document.getElementById('login-form').style.display='none';document.getElementById('change-form').style.display='block'}
+function showLogin(){document.getElementById('login-form').style.display='block';document.getElementById('change-form').style.display='none'}
+
+async function login(){
+  const pw=document.getElementById('password').value;
+  const resp=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw}),credentials:'same-origin'});
+  if(resp.ok){window.location.href='/admin'}
+  else{document.getElementById('error').textContent='密码错误——审判庭拒绝访问'}
+}
+
+async function skipLogin(){
+  // 直接请求无密码登录 (自用模式)
+  const resp=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:'noah_admin_2026'}),credentials:'same-origin'});
+  if(resp.ok){window.location.href='/admin'}
+}
+
+async function changePw(){
+  const old=document.getElementById('old-pw').value;
+  const n1=document.getElementById('new-pw').value;
+  const n2=document.getElementById('new-pw2').value;
+  if(n1!==n2){document.getElementById('error').textContent='两次密码不一致';return}
+  const resp=await fetch('/api/admin/change-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({old_password:old,new_password:n1}),credentials:'same-origin'});
+  const d=await resp.json();
+  if(d.status==='ok'){document.getElementById('error').style.color='#4a4';document.getElementById('error').textContent='密码已修改';showLogin()}
+  else{document.getElementById('error').textContent=d.error||'修改失败'}
+}
+
+document.getElementById('password').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+</script>
+</body>
+</html>

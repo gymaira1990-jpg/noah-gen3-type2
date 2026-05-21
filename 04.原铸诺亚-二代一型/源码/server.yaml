@@ -1,0 +1,19 @@
+server:
+  host: "0.0.0.0"
+  port: 8888
+  cors_origins:
+    - "http://localhost:8888"
+    - "http://127.0.0.1:8888"
+
+auth:
+  enabled: true
+  admin_password: "noah_admin_2026"
+  token_expire_hours: 24
+
+chat:
+  stream_output: true
+  max_history_display: 100
+  websocket_enabled: true
+
+admin:
+  page_size: 20

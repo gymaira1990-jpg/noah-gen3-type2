@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NOAH-PRIME · 铸造圣殿</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0c;color:#c8c8c8;font-family:'Segoe UI',system-ui,sans-serif;height:100vh;display:flex;font-size:16px}
+#nav{width:220px;min-width:220px;background:#0e0e14;border-right:1px solid #222;display:flex;flex-direction:column;overflow-y:auto}
+#nav h2{font-family:Georgia,serif;color:#c9a84c;font-size:16px;padding:16px 14px 12px;letter-spacing:2px;border-bottom:1px solid #1a1a24}
+.ns{color:#555;font-size:11px;text-transform:uppercase;letter-spacing:2px;padding:12px 14px 4px}
+.ni{color:#888;text-decoration:none;padding:7px 14px;font-size:13px;border-left:2px solid transparent;cursor:pointer;display:block;transition:.12s}
+.ni:hover,.ni.on{color:#c9a84c;border-left-color:#c9a84c;background:#14141a}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#top{background:#111118;border-bottom:1px solid #222;padding:8px 16px;display:flex;justify-content:space-between;align-items:center;font-size:13px;min-height:38px}
+#top .bdg{color:#c9a84c;font-family:Georgia,serif;font-size:15px}
+#content{flex:1;overflow-y:auto;padding:12px 16px}
+.pn{background:#111118;border:1px solid #222;border-radius:6px;padding:14px;margin-bottom:12px}
+.pn h3{color:#c9a84c;font-family:Georgia,serif;font-size:15px;border-bottom:1px solid #1a1a20;padding-bottom:7px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.pn h3 .rf{font-size:11px;color:#8a7330;cursor:pointer;font-family:'Segoe UI'}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+.st{text-align:center;padding:14px 8px;background:#0e0e14;border-radius:4px}
+.st .v{font-size:22px;color:#c9a84c;font-family:monospace}
+.st .l{font-size:11px;color:#555;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;color:#8a7330;padding:6px 8px;border-bottom:1px solid #222;font-family:Georgia,serif;font-size:12px}
+td{padding:5px 8px;border-bottom:1px solid #0e0e14}
+tr:hover{background:#14141a}
+input,textarea,select{background:#08080c;border:1px solid #222;color:#bbb;padding:8px 10px;border-radius:4px;font-size:13px;width:100%;font-family:monospace}
+input:focus,textarea:focus{border-color:#c9a84c;outline:none}
+textarea{resize:vertical;min-height:140px}
+button{background:linear-gradient(180deg,#1e1e2a,#111118);border:1px solid #8a7330;color:#c9a84c;padding:8px 16px;border-radius:4px;cursor:pointer;font-family:Georgia,serif;font-size:12px}
+button:hover{border-color:#c9a84c}
+button.dng{border-color:#a33;color:#a33}
+.tag{display:inline-block;padding:2px 6px;border-radius:3px;font-size:10px;margin:1px}
+.tg{background:#1a2a1a;color:#4a4}.tr{background:#2a1a1a;color:#a44}.ty{background:#2a2a1a;color:#aa4}.tb{background:#1a1a2a;color:#44a}
+.al{padding:8px 12px;border-radius:4px;font-size:11px;margin:4px 0}
+.ag{background:#1a2a1a;border:1px solid #2a4a2a;color:#4a4}
+.ar{background:#2a1a1a;border:1px solid #4a2a2a;color:#a44}
+.ay{background:#2a2a1a;border:1px solid #4a4a2a;color:#aa4}
+.arch-box{background:#08080c;border:1px dashed #333;border-radius:5px;padding:16px;font-family:monospace;font-size:12px;line-height:1.8;white-space:pre;color:#aaa}
+.arch-box .hl{color:#c9a84c}
+.arch-box .dim{color:#555}
+.doc-line{display:flex;padding:5px 0;border-bottom:1px solid #0e0e14;font-size:12px}
+.doc-line .dk{width:200px;color:#c9a84c;font-family:monospace;flex-shrink:0;font-size:11px}
+.doc-line .dc{color:#888;font-size:10px;margin-left:8px}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:#08080c}
+::-webkit-scrollbar-thumb{background:#222;border-radius:3px}
+</style>
+</head>
+<body>
+
+<div id="nav">
+  <h2>⚙ 铸造圣殿</h2>
+  <div class="ns">🏗️ 架构</div>
+  <a class="ni on" onclick="go('arch')">系统架构</a>
+  <a class="ni" onclick="go('workflow')">工作流管道</a>
+  <a class="ni" onclick="go('brain')">脑模块与硬件</a>
+  <div class="ns">📊 仪表</div>
+  <a class="ni" onclick="go('dashboard')">运行仪表盘</a>
+  <div class="ns">💻 控制</div>
+  <a class="ni" onclick="go('terminal')">诺亚本体终端</a>
+  <a class="ni" onclick="go('chat')">💬 本体聊天</a>
+  <a class="ni" onclick="go('ticketview')">工单结构查看器</a>
+  <a class="ni" onclick="go('llmconfig')">LLM模型配置</a>
+  <a class="ni" onclick="go('system')">系统控制</a>
+  <div class="ns">📋 数据</div>
+  <a class="ni" onclick="go('archive')">📚 档案馆</a>
+  <a class="ni" onclick="go('projects')">📁 项目中心</a>
+  <a class="ni" onclick="go('tickets')">工单监控</a>
+  <a class="ni" onclick="go('memory')">沉思者阵列</a>
+  <a class="ni" onclick="go('database')">数据库总览</a>
+  <div class="ns">🔌 接口</div>
+  <a class="ni" onclick="go('api')">全部API端点</a>
+  <a class="ni" onclick="go('tools')">铸造工具库</a>
+  <div class="ns">⚙ 配置</div>
+  <a class="ni" onclick="go('config')">宪法全文</a>
+  <a class="ni" onclick="go('configdoc')">配置说明书</a>
+  <a class="ni" onclick="go('persona')">人格滤镜</a>
+  <div class="ns">🛡️ 安全</div>
+  <a class="ni" onclick="go('security')">安全审计</a>
+  <a class="ni" onclick="go('logs')">API日志</a>
+  <a class="ni" onclick="go('health')">健康报告</a>
+  <a class="ni" onclick="go('settings')">⚙ 设置</a>
+  <a href="/api/admin/logout" style="color:#a33;margin-top:auto;padding:10px 14px;font-size:12px;text-decoration:none;display:block">退出圣殿</a>
+</div>
+
+<div id="main">
+  <div id="top"><span class="bdg">◆ 诺亚本体 · 管理员通道</span><span style="color:#555;font-size:10px" id="clk"></span></div>
+  <div id="content"><div class="al ag">加载中...</div></div>
+</div>
+
+<script>
+let cp=null;
+function go(p){cp=p;document.querySelectorAll('.ni').forEach(a=>a.classList.remove('on'));event.target.classList.add('on');load(p)}
+async function load(p){
+  const c=document.getElementById('content');c.innerHTML='<div class="al ag">加载中...</div>';
+  try{
+    switch(p){
+      case 'arch': arch();break;case 'workflow': workflow();break;case 'brain': brain();break;
+       case 'dashboard': await dash();break;case 'terminal': term();break;
+       case 'ticketview': ticketview();break;case 'llmconfig': llmconfig();break;
+       case 'tickets': await tickets();break;case 'memory': await memory();break;
+      case 'api': api();break;case 'tools': await tools();break;
+      case 'config': await config();break;case 'configdoc': configdoc();break;
+      case 'persona': persona();break;case 'database': await database();break;
+      case 'security': security();break;case 'logs': await logs();break;
+      case 'system': system();break;case 'health': await health();break;case 'chat': chatPanel();break;case 'settings': settings();break;
+    }
+  }catch(e){c.innerHTML='<div class="al ar">加载失败: '+e.message+'</div>'}
+}
+
+function arch(){
+  document.getElementById('content').innerHTML=`
+<div class="pn"><h3>🏗️ 三层架构 · DOS/Windows/应用 模型</h3>
+<div class="arch-box">
+<span class="hl">▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐</span>
+<span class="hl"> 第3层 · 诺亚本体 (裸机层)</span>
+<span class="hl"> 类比: DOS命令提示符 / Linux终端</span>
+<span class="hl"> 入口: python3 noah_terminal.py</span>
+<span class="hl"> 权限: 一切。可以修改诺亚自身的一切代码和配置。</span>
+<span class="hl"> 使用场景: 最后手段。系统坏了来这里修。</span>
+<span class="hl">          Web界面挂了来这里重启。</span>
+<span class="hl">▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐</span>
+<span class="hl"> 第2层 · 铸造圣殿 (图形界面层)</span>
+<span class="hl"> 类比: Windows桌面 / macOS Finder</span>
+<span class="hl"> 入口: localhost:8888/admin (当前页面)</span>
+<span class="hl"> 权限: 和本体一样。但是有图形界面——</span>
+<span class="hl">       仪表盘·架构图·配置面板·日志·数据库·工具库</span>
+<span class="hl"> 使用场景: 日常管理。查看状态、修改配置、</span>
+<span class="hl">         监控运行、搜索记忆、查看日志。</span>
+<span class="hl">▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐</span>
+<span class="dim"> 第1层 · 诺亚小镇 (应用层)</span>
+<span class="dim"> 类比: 手机App / 浏览器</span>
+<span class="dim"> 入口: localhost:8888/town (小镇) / localhost:8888/ (聊天)</span>
+<span class="dim"> 权限: 只能办事。不能改诺亚自己。</span>
+<span class="dim"> 使用场景: 日常对话、搜资料、写小说、查文件。</span>
+</div></div>
+<div class="g2">
+  <div class="pn"><h3>📡 双星架构</h3>
+    <div class="arch-box" style="font-size:10px"><span class="hl">NOAH-PRIME</span> (WSL · GPU · <span class="hl">本地</span>)
+  ⚡ 实时推理 · 五阶段管道
+  ⚡ 17工具 · 5脑 · 5人格
+  ⚡ PG noah_prime (主库)
+       │ SSH隧道
+       ▼
+<span class="dim">远征堡垒</span> (CPU · <span class="dim">广州</span>)
+  📡 知识备份 · 语义检索缓存
+  📡 异步推理 · 健康监控</div></div>
+  <div class="pn"><h3>🧠 五阶段管道</h3>
+    <div class="arch-box" style="font-size:10px">输入 → <span class="hl">[1]大贤者</span> 思绪整理
+     → <span class="hl">[2]分发器</span> 工单路由
+     → <span class="hl">[3]审判官</span> 合规审查
+     → <span class="hl">[4]星语庭</span> 专家决策
+     → <span class="hl">[5]大贤者</span> 回复合并
+     → <span class="dim">沉思者</span> 记忆沉淀</div></div>
+</div>`;
+}
+
+function workflow(){
+  document.getElementById('content').innerHTML=`
+<div class="pn"><h3>⚙ 五阶段工单闭环 · 全数据流</h3>
+<div class="arch-box" style="font-size:11px">
+用户输入 (自然语言)
+  │
+  ├─ <span class="hl">[1] 大贤者 · 思绪整理器 (qwen3:4b)</span>
+  │   输入: 原始文本  →  输出: 意图碎片 + 保护标记
+  │   温度: 0.3  │  超时: 30s  │  降级: 规则拆解
+  │
+  ├─ <span class="hl">[2] 分发器 · 工单路由</span>
+  │   碎片→标准Ticket  →  查task_type_matrix决定路由
+  │   emotional→豆包  │  code→DeepSeek  │  其他→DeepSeek
+  │   ⚡ 4B建议权: 可建议路由但不能覆盖硬性规则
+  │
+  ├─ <span class="hl">[3] 审判官 · 合规审查 (qwen2.5:0.5b)</span>
+  │   格式完整性 · 安全红线 · 敏感信息
+  │   放行 / 打回 / 拦截  │  不通过→回流确认
+  │
+  ├─ <span class="hl">[4] 星语庭/国教圣堂 · 专家决策</span>
+  │   DeepSeek(远程) / 豆包(远程)  │  ⚡ 多ticket并行
+  │   预算检查 → 80%提醒 · 95%限流
+  │   二次审查 → 审判官复查输出
+  │
+  ├─ <span class="hl">[5] 大贤者 · 回复合并</span>
+  │   多通道→合并自然语言  │  自动人格切换
+  │   话题漂移检测(每5轮)  │  用户反馈捕获
+  │
+  └─ <span class="dim">记忆沉淀 → PG向量库 + lightweight.db</span>
+     API日志 → api_call_logs  │  评分 → score_records
+</div></div>
+<div class="pn"><h3>🔄 自动化闭环 (6项)</h3>
+<div class="g3">${[
+  ['SSMP维护','每24h/空闲30m','碎片整理·热度衰减·日志归档'],
+  ['预算预警','每次API调用','80%提醒·95%限流'],
+  ['话题漂移','每5轮对话','相似度<0.4→主动提示'],
+  ['用户反馈','每轮对话后','自动捕获肯定/否定→打分'],
+  ['中断恢复','每次启动','扫描未完成→提示恢复'],
+  ['决策门闸','不可逆操作','拦截→确认工单→审计记录'],
+].map(s=>`<div class="st"><div class="v" style="font-size:14px">${s[0]}</div><div class="l">${s[1]}</div><div class="l" style="color:#555">${s[2]}</div></div>`).join('')}</div></div>`;
+}
+
+function brain(){
+  document.getElementById('content').innerHTML=`
+<div class="pn"><h3>🧠 脑模块运行状态</h3>
+<table><tr><th>模块</th><th>模型</th><th>角色</th><th>状态</th><th>位置</th></tr>
+<tr><td style="color:#c9a84c">大贤者</td><td>qwen3:4b-instruct</td><td>首席分析师·思绪整理·回复合并</td><td><span class="tag tg">◆ 本地</span></td><td>Ollama</td></tr>
+<tr><td style="color:#c9a84c">审判官</td><td>qwen2.5:0.5b</td><td>合规审查·安全检查</td><td><span class="tag tg">◆ 本地</span></td><td>Ollama</td></tr>
+<tr><td style="color:#c9a84c">沉思者</td><td>qwen3-embedding:0.6b</td><td>文本→向量·1024维</td><td><span class="tag tg">◆ 本地</span></td><td>Ollama</td></tr>
+<tr><td style="color:#c9a84c">星语庭</td><td>deepseek-v4-flash</td><td>线上大脑·复杂推理</td><td><span class="tag tb">☁ 云端</span></td><td>api.deepseek.com</td></tr>
+<tr><td style="color:#c9a84c">圣像师</td><td>doubao-seed-2-0-lite</td><td>情感通道·视觉处理</td><td><span class="tag tb">☁ 云端</span></td><td>火山引擎</td></tr>
+</table></div>
+<div class="pn"><h3>💻 API密钥配置</h3>
+<table><tr><th>密钥</th><th>类型</th><th>状态</th><th>指针</th></tr>
+<tr><td>DeepSeek Flash</td><td><span class="tag tg">配置类·自动加载</span></td><td><span class="tag tg">◆ 在线</span></td><td style="font-size:10px;color:#555">办公室保险柜/DEEPSEEK/</td></tr>
+<tr><td>DeepSeek Pro</td><td><span class="tag tg">配置类·自动加载</span></td><td><span class="tag tg">◆ 在线</span></td><td style="font-size:10px;color:#555">同上</td></tr>
+<tr><td>豆包 API</td><td><span class="tag ty">调用类·用时取</span></td><td><span class="tag tg">◆ 在线</span></td><td style="font-size:10px;color:#555">办公室保险柜/火山大模型/</td></tr>
+<tr><td>QQ Bot</td><td><span class="tag ty">调用类·用时取</span></td><td><span class="tag tg">◆ 在线</span></td><td style="font-size:10px;color:#555">办公室保险柜/腾讯云/QQ机器人/</td></tr>
+<tr><td>GitHub</td><td><span class="tag ty">调用类·用时取</span></td><td><span class="tag tg">◆ 在线</span></td><td style="font-size:10px;color:#555">办公室保险柜/GITHUB/</td></tr>
+</table></div>
+<div class="pn"><h3>📊 硬件资源</h3>
+<div class="g3">${[
+  ['GPU','RTX 5070','8GB VRAM'],
+  ['RAM','15GB','WSL2'],
+  ['Ollama','3个模型','3.5GB'],
+].map(s=>`<div class="st"><div class="v" style="font-size:14px">${s[0]}</div><div class="l">${s[1]}</div><div class="l" style="color:#555">${s[2]}</div></div>`).join('')}</div></div>`;
+}
+
+async function dash(){
+  const c=document.getElementById('content');
+  let stats={tokens:0,calls:0},mem={total_entries:0},tools={total_tools:0};
+  try{stats=await(await fetch('/api/public/stats')).json()}catch(e){}
+  try{mem=await(await fetch('/api/public/memory')).json()}catch(e){}
+  try{tools=await(await fetch('/api/public/tools')).json()}catch(e){}
+  c.innerHTML=`<div class="g4">${[['Token',(stats.tokens||0).toLocaleString(),'今日'],['调用',stats.calls||0,'次'],['记忆',mem.total_entries||0,'条'],['工具',tools.total_tools||'—','个']].map(s=>`<div class="st"><div class="v">${s[1]}</div><div class="l">${s[0]} · ${s[2]}</div></div>`).join('')}</div>
+<div class="g2"><div class="pn"><h3>🛡️ 自检</h3>${['管道 ◆','模型 3个','PG 12表'].map(x=>`<div class="al ag">✅ ${x} 正常</div>`).join('')}</div><div class="pn"><h3>📊 API</h3><div class="al ag">${stats.cost_estimate||'正常'}</div></div></div>`;
+}
+
+function term(){
+  document.getElementById('content').innerHTML=`
+<div class="pn"><h3>💻 诺亚本体终端 <span style="font-size:10px;color:#555">TLL · 类终端语言界面</span></h3>
+<div class="al ay" style="font-size:13px">⚠ 完整权限。输入 <span style="color:#c9a84c">/</span> 查看可用命令。所有命令三层通用（本体·管理台·小镇）。</div>
+<div style="display:flex;gap:6px;margin:8px 0;font-size:10px;color:#555;flex-wrap:wrap" id="tbar">
+  <span>模型: <b style="color:#c9a84c">deepseek-v4-flash</b></span>
+  <span>|</span><span>Token: <b style="color:#c9a84c" id="ttok">0</b></span>
+  <span>|</span><span>会话: <b id="tcost" style="color:#888">¥0</b></span>
+  <span>|</span><span>状态: <b id="tstate" style="color:#4a4">◆ 就绪</b></span>
+  <span style="margin-left:auto;cursor:pointer;color:#a33;display:none" id="tstop" onclick="tsend('/stop')">■ 中断</span>
+</div>
+<div id="tmsg" style="height:600px;overflow-y:auto;margin:4px 0;font-size:13px;line-height:1.5;border:1px solid #222;background:#08080c;padding:8px;border-radius:4px"></div>
+<div style="position:relative">
+  <div id="tac" style="display:none;position:absolute;bottom:100%;left:0;right:0;background:#0e0e14;border:1px solid #8a7330;border-radius:4px 4px 0 0;max-height:160px;overflow-y:auto;z-index:10;font-size:11px"></div>
+  <textarea id="tarea" rows="3" placeholder="输入指令或 / 查看命令..." style="font-size:14px" onkeydown="thandle(event)"></textarea>
+</div>
+<button onclick="tsend()" style="margin-top:6px;font-size:13px">▶ 发送</button>
+<button onclick="tsend('/status')" style="margin:6px 0 0 6px;font-size:11px">/status</button>
+<button onclick="tsend('/backup')" style="margin:6px 0 0 4px;font-size:11px">/backup</button>
+<button onclick="tsend('/help')" style="margin:6px 0 0 4px;font-size:11px">/help</button></div>
+<div class="al" style="font-size:10px;color:#555;margin-top:6px">
+<b>斜杠命令：</b> /status /backup /health /sync /config /model /restart /stop /new /help /tools /memory /logs /budget · 直接输入自然语言也可以</div>`;
+  // 加载聊天历史
+  setTimeout(async()=>{
+    try{
+      const r=await(await fetch('/api/chat/history?limit=30')).json();
+      const d=document.getElementById('tmsg');
+      r.messages.reverse().forEach(m=>{
+        d.innerHTML+='<div style="color:'+(m.role==='user'?'#c9a84c':'#bbb')+';margin:2px 0;font-size:12px">'+(m.role==='user'?'⚙> ':'')+mdRender(m.text)+'</div>';
+      });
+      if(d)d.scrollTop=d.scrollHeight;
+    }catch(e){}
+  },500);
+}
+
+// ═══ TLL 命令注册表 ═══
+const CMDS=[
+  {n:'status',d:'系统自检·显示所有模块状态',a:['st','check']},
+  {n:'backup',d:'备份数据库到本地',a:['bk']},
+  {n:'health',d:'运行完整健康检查',a:['hk']},
+  {n:'sync',d:'同步知识到远征堡垒(广州)',a:[]},
+  {n:'config',d:'显示当前宪法配置',a:['cfg']},
+  {n:'model',d:'显示模型状态·切换模型',a:['m']},
+  {n:'restart',d:'重启Web服务',a:['rs']},
+  {n:'stop',d:'中断当前正在执行的任务',a:[]},
+  {n:'new',d:'开始新的对话会话',a:['reset']},
+  {n:'tools',d:'列出所有可用工具',a:['tl']},
+  {n:'memory',d:'查看沉思者阵列状态',a:['mem']},
+  {n:'logs',d:'查看最近API调用日志',a:['lg']},
+  {n:'budget',d:'查看API预算使用情况',a:['bg']},
+  {n:'help',d:'显示所有可用命令',a:['h','?']},
+];
+
+function thandle(e){
+  const ta=document.getElementById('tarea'),ac=document.getElementById('tac');
+  if(e.key==='/'&&ta.value===''){
+    ac.style.display='block';ac.innerHTML=CMDS.map(c=>`<div style="padding:4px 8px;cursor:pointer;color:#c9a84c" onclick="document.getElementById('tarea').value='/'+'${c.n} ';document.getElementById('tac').style.display='none';document.getElementById('tarea').focus()">/<b>${c.n}</b><span style="color:#888;margin-left:8px">${c.d}</span></div>`).join('');
+    setTimeout(()=>ta.value='/',10);
+  }
+  if(e.key==='Escape'){ac.style.display='none'}
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();tsend()}
+}
+document.addEventListener('click',e=>{if(!e.target.closest('#tarea')&&!e.target.closest('#tac'))document.getElementById('tac').style.display='none'});
+
+let tTokens=parseInt(localStorage.getItem('noah_tokens')||'0');
+document.addEventListener('DOMContentLoaded',()=>{
+  const tt=document.getElementById('ttok');if(tt)tt.textContent=tTokens.toLocaleString();
+  const tc=document.getElementById('tcost');if(tc)tc.textContent='¥'+(tTokens*0.000002).toFixed(4);
+});
+async function tsend(cmd){
+  let t=(typeof cmd==='string')?cmd:document.getElementById('tarea').value.trim();if(!t)return;
+  document.getElementById('tac').style.display='none';
+  if(typeof cmd!=='string')document.getElementById('tarea').value='';
+  if(t.startsWith('/')){handleSlash(t);return}
+  const d=document.getElementById('tmsg');d.innerHTML+=`<div style="color:#c9a84c;margin:4px 0;font-size:13px">⚙> ${t}</div>`;
+  // 显示中断按钮+执行状态
+  document.getElementById('tstop').style.display='inline';
+  document.getElementById('tstate').textContent='⚙ 执行中';
+  document.getElementById('tstate').style.color='#aa4';
+  try{
+    const r=await(await fetch('/api/admin/terminal',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:t})})).json();
+    const reply=r.reply||'...';d.innerHTML+=`<div style="color:#bbb;margin:4px 0 10px;font-size:13px">${mdRender(reply)}</div>`;d.scrollTop=d.scrollHeight;
+    if(r.tokens){tTokens+=r.tokens;localStorage.setItem('noah_tokens',tTokens);document.getElementById('ttok').textContent=tTokens.toLocaleString();document.getElementById('tcost').textContent='¥'+(tTokens*0.000002).toFixed(4)}
+    document.getElementById('tstate').textContent='◆ 就绪';
+    document.getElementById('tstate').style.color='#4a4';
+  }catch(e){d.innerHTML+=`<div style="color:#a33">通讯失败</div>`;document.getElementById('tstate').textContent='❌ 失败';document.getElementById('tstate').style.color='#a44'}
+  document.getElementById('tstop').style.display='none';
+}
+
+
+// Markdown渲染 (共享)
+function mdRender(t){
+  if(!t)return'';
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+   .replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+   .replace(/\*(.+?)\*/g,'<i>$1</i>')
+   .replace(/`([^`]+)`/g,'<code style="background:#1a1a24;padding:1px 4px;border-radius:3px">$1</code>')
+   .replace(/\n/g,'<br>');
+}
+
+async function handleSlash(cmd){
+  const t=cmd.slice(1).split(' ')[0].toLowerCase();
+  const d=document.getElementById('tmsg');
+  switch(t){
+    case 'help':case 'h':case '?':d.innerHTML+=`<div style="color:#c9a84c;margin:4px 0">⚙ /help</div><div style="color:#aaa;margin:4px 0 10px">${CMDS.map(c=>`/<b>${c.n}</b> — ${c.d} ${c.a.length?'(别名: '+c.a.join(', ')+')':''}`).join('<br>')}</div>`;d.scrollTop=d.scrollHeight;break;
+    case 'status':case 'st':case 'check':d.innerHTML+=`<div style="color:#c9a84c;margin:4px 0">⚙ /status</div>`;try{const r=await(await fetch('/api/admin/system/health',{method:'POST'})).json();d.innerHTML+=`<pre style="color:#aaa;font-size:11px;margin:4px 0 10px">${JSON.stringify(r,null,2)}</pre>`;d.scrollTop=d.scrollHeight}catch(e){}break;
+    case 'backup':case 'bk':d.innerHTML+=`<div style="color:#c9a84c;margin:4px 0">⚙ /backup</div>`;try{const r=await(await fetch('/api/admin/system/backup',{method:'POST'})).json();d.innerHTML+=`<div class="al ag" style="margin:4px 0 10px">${JSON.stringify(r)}</div>`;d.scrollTop=d.scrollHeight}catch(e){}break;
+    case 'health':case 'hk':d.innerHTML+=`<div style="color:#c9a84c;margin:4px 0">⚙ /health</div>`;try{const r=await(await fetch('/api/admin/system/health',{method:'POST'})).json();d.innerHTML+=`<pre style="color:#aaa;font-size:11px;margin:4px 0 10px">${JSON.stringify(r,null,2)}</pre>`;d.scrollTop=d.scrollHeight}catch(e){}break;
+    case 'sync':d.innerHTML+=`<div style="color:#c9a84c;margin:4px 0">⚙ /sync</div>`;try{const r=await(await fetch('/api/admin/system/sync',{method:'POST'})).json();d.innerHTML+=`<div class="al ag" style="margin:4px 0 10px">${JSON.stringify(r)}</div>`;d.scrollTop=d.scrollHeight}catch(e){}break;
+    case 'new':case 'reset':d.innerHTML='';tTokens=0;document.getElementById('ttok').textContent='0';document.getElementById('tcost').textContent='¥0';break;
+    default:tsend(cmd);break;
+  }
+}
+
+async function tickets(){
+  const c=document.getElementById('content');
+  try{const r=await(await fetch('/api/admin/tickets')).json();const ts=r.tickets||[];c.innerHTML=`<div class="pn"><h3>📋 活跃工单 (${ts.length}) <span class="rf" onclick="go('tickets')">刷新</span></h3>${ts.length?ts.map(t=>'<div class="al ag">'+t.ticket_id+' · '+t.task_type_tag+' · '+(t.task_layer?.primary_intent?.substring(0,30)||'')+'</div>').join(''):'<div class="al">暂无活跃工单</div>'}</div>`}catch(e){}
+}
+
+async function memory(){
+  const c=document.getElementById('content');
+  let mem={total_entries:0,with_vectors:0,by_category:{}};
+  try{mem=await(await fetch('/api/public/memory')).json()}catch(e){}
+  c.innerHTML=`<div class="pn"><h3>🧠 沉思阵列 <span class="rf" onclick="go('memory')">刷新</span></h3>
+<div class="g3">${[['总条目',mem.total_entries,'条'],['向量化',mem.with_vectors,'条']].map(s=>'<div class="st"><div class="v">'+s[1]+'</div><div class="l">'+s[0]+'</div></div>').join('')}</div>
+<table><tr><th>分类</th><th>数量</th></tr>${Object.entries(mem.by_category||{}).map(([k,v])=>'<tr><td>'+k+'</td><td>'+v+'</td></tr>').join('')}</table></div>
+<div class="pn"><h3>🔍 语义搜索</h3><input id="mq" placeholder="搜索记忆..." style="font-size:13px"><button onclick="ms()" style="margin-top:6px">搜索</button><pre id="mr" style="margin-top:8px;font-size:11px;color:#888"></pre></div>`;
+}
+async function ms(){const q=document.getElementById('mq').value;try{const r=await(await fetch('/api/admin/memory/search?q='+encodeURIComponent(q))).json();document.getElementById('mr').textContent=JSON.stringify(r,null,2)}catch(e){}}
+
+function api(){
+  document.getElementById('content').innerHTML=`<div class="pn"><h3>🔌 全部API端点 (28个)</h3>
+${[
+  ['GET','/','对话首页','页面'],['GET','/town','诺亚小镇','页面'],['GET','/admin','铸造圣殿','页面·需认证'],['GET','/admin/login','登录','页面'],
+  ['POST','/api/chat','HTTP对话','Web触须'],['WS','/chat','WebSocket流式','实时'],
+  ['POST','/api/admin/login','认证','管理'],['POST','/api/admin/logout','退出','管理'],
+  ['POST','/api/admin/terminal','诺亚本体对话·完整权限','管理'],
+  ['GET','/api/admin/stats','统计','管理'],['GET','/api/admin/tickets','工单','管理'],['GET','/api/admin/logs','日志','管理'],
+  ['GET','/api/admin/memory','记忆','管理'],['GET','/api/admin/memory/search','语义搜索','管理'],['GET','/api/admin/tools','工具','管理'],
+  ['GET','/api/admin/persona','人格','管理'],['POST','/api/admin/persona/switch','切换人格','管理'],
+  ['GET','/api/admin/config','读宪法','管理'],['POST','/api/admin/config','保存宪法·自动备份','管理'],
+  ['GET','/api/admin/security','安全','管理'],['GET','/api/admin/system/info','系统','管理'],
+  ['POST','/api/admin/system/backup','备份','管理'],['POST','/api/admin/system/health','健康','管理'],['POST','/api/admin/system/sync','同步远征','管理'],
+  ['GET','/api/public/stats','公开统计','公开'],['GET','/api/public/memory','公开记忆','公开'],['GET','/api/public/tools','公开工具','公开'],
+].map(([m,e,d,n])=>`<div class="doc-line"><span class="tag ${m==='GET'?'tg':m==='POST'?'tr':'tb'}">${m}</span><span class="dk" style="color:#c9a84c">${e}</span><span style="color:#bbb;font-size:11px">${d}</span><span style="color:#555;font-size:9px;margin-left:auto">${n}</span></div>`).join('')}</div>`;
+}
+
+async function tools(){
+  const c=document.getElementById('content');
+  try{const r=await(await fetch('/api/admin/tools')).json();const ts=r.tools||{};
+  const cats={};Object.entries(ts).forEach(([k,v])=>{const cat=v.category||'other';if(!cats[cat])cats[cat]=[];cats[cat].push({name:k,...v})});
+  c.innerHTML='<div class="pn"><h3>🔧 铸造工具库 ('+Object.keys(ts).length+'工具)</h3>';
+  Object.entries(cats).forEach(([cat,items])=>{c.innerHTML+=`<div style="margin-bottom:12px"><div class="ns" style="padding:4px 0;font-size:12px">${cat} (${items.length})</div>${items.map(t=>'<div class="al ag" style="font-size:11px"><b>'+t.name+'</b> · '+t.description+' '+(t.requires_review?'<span class="tag ty">需审查</span>':'<span class="tag tg">自由</span>')+'</div>').join('')}</div>`});
+  c.innerHTML+='</div>'}catch(e){}
+}
+
+async function config(){
+  const c=document.getElementById('content');
+  try{const r=await(await fetch('/api/admin/config')).json();c.innerHTML=`<div class="pn"><h3>⚙ 宪法全文 (constitution.yaml) <span class="rf">只读·通过诺亚本体对话修改</span></h3><textarea readonly style="min-height:500px;font-size:11px;color:#aaa;background:#08080c">${r.raw||''}</textarea></div>`}catch(e){}
+}
+
+function configdoc(){
+  document.getElementById('content').innerHTML=`<div class="pn"><h3>📖 配置项中文说明书</h3>
+<div class="al ag">所有配置通过「诺亚本体终端」对话修改——直接说"把阈值改成0.7"，无需手动编辑文件。</div>
+${[
+  ['task_type_matrix','任务路由矩阵','每种任务用哪个模型、多少temperature。如 code→DeepSeek(0.1) chat→豆包(0.7)'],
+  ['safety.forbidden_actions','禁止操作','硬编码安全红线: 删系统文件/改注册表/未确认外部请求'],
+  ['decision_gate','决策门闸','不可逆操作需确认。git push/删文件/清库 → 必须用户说"确认"'],
+  ['dialogue_rules','对话规则','诺亚是唯一前台人格。下属模块信息由诺亚转述并标注来源'],
+  ['permission_tiers','权限分级','terminal=管理员·全部 web=用户·不可改代码'],
+  ['delivery.output_folder','交付文件夹','最终产出放桌面/诺亚交付/。你说"发给我"才交付'],
+  ['vector_search.threshold','相似度阈值(0.65)','搜记忆匹配严格度。高=精确少 低=多但有噪音'],
+  ['max_working_memory_turns','工作记忆轮数(20)','最近N轮保留。越大记忆越好但Token越多'],
+  ['ssmp.trigger_interval','静默维护间隔(24h)','每N小时自动清理碎片·归档日志·降热度'],
+  ['fallback','降级策略','DeepSeek挂了→简单查询用4B本地·复杂任务暂挂通知'],
+].map(s=>`<div class="doc-line"><span class="dk">${s[0]}</span><span style="color:#c9a84c;font-size:10px;width:180px">${s[1]}</span><span style="color:#888;font-size:10px">${s[2]}</span></div>`).join('')}</div>`;
+}
+
+function persona(){
+  document.getElementById('content').innerHTML=`<div class="pn"><h3>🎭 人格滤镜 (5种·自动切换)</h3>
+<table><tr><th>人格ID</th><th>战锤名</th><th>风格</th><th>自动触发场景</th></tr>
+<tr><td>tech_partner</td><td>技术大贤者</td><td>专业·直击要害</td><td>代码·系统操作</td></tr>
+<tr><td>creative_buddy</td><td>创意国教僧侣</td><td>发散·跳跃</td><td>创作·写作</td></tr>
+<tr><td>magos</td><td>铸造大贤者</td><td>冰冷·精确</td><td>终端本体对话</td></tr>
+<tr><td>datasmith</td><td>数据工匠</td><td>只报数据</td><td>分析报告</td></tr>
+<tr><td>warm_servitor</td><td>温暖伺服skull</td><td>温和·有礼</td><td>闲聊·情感对话</td></tr>
+</table></div>`;
+}
+
+async function database(){
+  document.getElementById('content').innerHTML=`
+<div class="pn"><h3>🗄️ PostgreSQL · noah_prime (独立·物理隔离)</h3>
+<table><tr><th>表名</th><th>用途</th><th>说明</th></tr>
+${[
+  ['knowledge_entries','知识向量记忆','PG pgvector 1024维'],
+  ['exact_info','精确信息','键值对配置'],
+  ['codex_rules','圣典规则','L1-L5规则'],
+  ['tickets_log','工单日志','状态流转'],
+  ['api_call_logs','API调用日志','模型/Token/摘要'],
+  ['tool_uses','工具使用记录','工具名/参数/结果'],
+  ['reviews_log','审查记录','放行/拦截'],
+  ['score_records','评分记录','效率/准确/资源'],
+  ['protection_markers','保护标记','TICKET等标记'],
+  ['design_iterations','设计迭代','旧→新变迁'],
+  ['decisions','决策记录','确认/取消审计'],
+  ['memory_store','通用记忆','JSONB灵活存储'],
+].map(s=>'<tr><td style="color:#c9a84c;font-family:monospace">'+s[0]+'</td><td>'+s[1]+'</td><td style="color:#888;font-size:11px">'+s[2]+'</td></tr>').join('')}</table></div>
+<div class="pn"><h3>📦 SQLite · lightweight.db</h3><div class="al ag">关键词索引 · 迭代标记 · 密钥指针 · 系统身份</div></div>`;
+}
+
+function security(){
+  document.getElementById('content').innerHTML=`<div class="pn"><h3>🛡️ 安全审计 (5层)</h3>
+${[
+  ['决策门闸','不可逆操作→确认工单→审计记录'],
+  ['通道隔离','Web触须无法执行内务'],
+  ['二次审查','DeepSeek输出必经审判官'],
+  ['保护标记','4类标记防压缩误删'],
+  ['密钥保险柜','铭文不存配置文件'],
+].map(s=>'<div class="al ag">✅ '+s[0]+': '+s[1]+'</div>').join('')}</div>`;
+}
+
+async function logs(){
+  const c=document.getElementById('content');
+  try{const r=await(await fetch('/api/admin/logs')).json();const ls=r.logs||[];
+  c.innerHTML=`<div class="pn"><h3>📜 API日志 (${ls.length}条) <span class="rf" onclick="go('logs')">刷新</span></h3>
+<table><tr><th>时间</th><th>模型</th><th>Token</th><th>工单</th></tr>${ls.map(l=>'<tr><td>'+(l.timestamp||'').substring(11,19)+'</td><td>'+l.model+'</td><td>'+l.tokens+'</td><td style="color:#888;font-size:10px">'+(l.ticket||'').substring(0,14)+'</td></tr>').join('')}</table></div>`}catch(e){}
+}
+
+
+// ═══ 工单结构查看器 ═══
+
+// ═══ 档案馆 ═══
+async function archive(){
+  const c=document.getElementById('content');
+  c.innerHTML='<div class="pn"><h3>📚 档案馆 <span class="rf" onclick="go(\'archive\')">刷新</span></h3><input id="asearch" placeholder="搜索档案馆..." style="margin-bottom:8px;font-size:13px" oninput="loadArchive()"><div id="acats" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px"></div><div id="acards" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div></div>';
+  await loadArchive();
+}
+async function loadArchive(){
+  const q=document.getElementById('asearch')?.value||'';
+  try{
+    const r=await(await fetch('/api/archive/list?search='+encodeURIComponent(q)+'&limit=30')).json();
+    document.getElementById('acats').innerHTML=r.categories.map(c=>`<span class="tag tg" style="cursor:pointer" onclick="document.getElementById('asearch').value='';loadArchive()">${c}</span>`).join('');
+    document.getElementById('acards').innerHTML=r.cards.map(c=>`<div class="pn" style="margin:0;padding:10px">
+      <div style="color:#c9a84c;font-size:12px;font-family:monospace">${c.type==='exact'?'🗂':'🧠'} ${c.title||'无标题'}</div>
+      <div style="color:#888;font-size:10px;margin:4px 0">${c.content||''}</div>
+      <div style="color:#555;font-size:9px">${c.category||''} · 热度:${c.freq||0} ${c.source?'· 来源:'+c.source:''}</div>
+    </div>`).join('')||'<div class="empty-state">档案馆暂无条目。开始对话后自动积累。</div>';
+  }catch(e){}
+}
+
+// ═══ 项目中心 ═══
+async function projects(){
+  const c=document.getElementById('content');
+  c.innerHTML='<div class="pn"><h3>📁 项目中心 · 工作台 <span class="rf" onclick="go(\'projects\')">刷新</span></h3><div id="pboards" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div></div>';
+  try{
+    const r=await(await fetch('/api/projects')).json();
+    const active=r.projects.filter(p=>p.status&&!['success','done','completed'].includes(p.status));
+    const done=r.projects.filter(p=>p.status&&['success','done','completed'].includes(p.status));
+    document.getElementById('pboards').innerHTML=`
+      <div class="pn" style="margin:0"><h4>⚙ 进行中 (${active.length})</h4>${active.length?active.map(p=>`<div class="al ag"><b>${p.ticket_id}</b> · ${p.status||'?'}<br><span style="font-size:9px;color:#888">${(p.summary||'').substring(0,60)}</span></div>`).join(''):'<div class="al">暂无</div>'}</div>
+      <div class="pn" style="margin:0"><h4>✅ 已完成 (${done.length})</h4>${done.length?done.map(p=>`<div class="al"><b>${p.ticket_id}</b> · ${p.status||'?'}<br><span style="font-size:9px;color:#888">${(p.summary||'').substring(0,60)}</span></div>`).join(''):'<div class="al">暂无</div>'}</div>`;
+  }catch(e){}
+}
+
+function ticketview(){
+  document.getElementById('content').innerHTML=`<div class="pn"><h3>📋 工单结构 · 发送给大模型的完整JSON</h3>
+<div class="al ag" style="font-size:13px">这是诺亚与大模型之间的协议。五层结构：规则→身份→需求→上下文→备注。</div>
+<div class="arch-box" style="font-size:11px;margin:10px 0">
+<span class="hl">工单 = {</span>
+  <span class="hl">① 规则层 (rules)</span>      ← 告诉大模型必须遵守什么
+    system_prompt: "你是诺亚·原初..."     (身份铁律+人称协议+回复格式)
+    safety_rules:   ["禁止删文件",...]      (硬编码安全红线)
+    temperature:    0.3                     (严谨度: 0.1=极严谨 0.9=很发散)
+  <span class="hl">② 身份层 (identity)</span>    ← 告诉大模型它是谁
+    role:           "诺亚·原初·机魂总管"
+    persona:        "tech_partner"          (自动切换5种人格)
+  <span class="hl">③ 需求层 (task)</span>        ← 告诉大模型要做什么
+    primary_intent: "备份数据库"
+    sub_tasks:      ["dump PG","compress"]
+    urgency:        "normal"  |  constraint: "high"
+  <span class="hl">④ 上下文层 (context)</span>    ← 帮大模型"记住"之前的事
+    热记忆:         最近20轮对话摘要 (自动裁剪到模型上下文限制)
+    项目上下文:      rules.md + context.json
+    相关记忆:       向量检索top-3结果
+  <span class="hl">⑤ 备注层 (meta)</span>        ← 元信息
+    ticket_id / channel / budget_check / markers
+<span class="hl">}</span>
+</div>
+<div class="al" style="font-size:11px;color:#6a6a6a">
+<b>API格式:</b> DeepSeek→messages=[{role:"system",content:①②}, {role:"user",content:③④⑤}] · 豆包→类似<br>
+<b>超长处理:</b> 上下文层自动裁剪到128K以内·超出部分向量压缩·备注层标注截断位置</div></div>`;
+}
+
+// ═══ LLM模型配置 ═══
+function llmconfig(){
+  document.getElementById('content').innerHTML=`<div class="pn"><h3>🔌 大模型对比 · DeepSeek vs 豆包</h3>
+<table><tr><th>参数</th><th style="color:#4488ff">DeepSeek V4 Flash</th><th style="color:#ff8844">豆包 Seed 2.0 Lite</th><th>说明(人话)</th></tr>
+<tr><td>端点</td><td>api.deepseek.com/v1</td><td>ark.cn-beijing.volces.com</td><td>API地址</td></tr>
+<tr><td>最大上下文</td><td style="color:#4a4">128K tokens</td><td style="color:#4a4">128K tokens</td><td>一次能塞多少内容</td></tr>
+<tr><td>最大输出</td><td style="color:#4a4">8K tokens</td><td style="color:#4a4">4K tokens</td><td>一次最多回复多长</td></tr>
+<tr><td>temperature</td><td>0.0-2.0</td><td>0.0-1.0</td><td>越高越随机·越低越死板</td></tr>
+<tr><td>我们用的temp</td><td style="color:#c9a84c">0.1-0.3</td><td style="color:#c9a84c">0.7</td><td>代码严谨·闲聊活泼</td></tr>
+<tr><td>费率(入/出)</td><td>¥1/¥4 每百万token</td><td>¥0.8/¥2 每百万token</td><td>你发的便宜·回复的贵</td></tr>
+<tr><td>流式输出</td><td>✅ SSE</td><td>✅ SSE</td><td>一个字一个字蹦</td></tr>
+<tr><td>我们用的场景</td><td>代码·分析·推理</td><td>闲聊·情感·创作</td><td>按task_type_matrix路由</td></tr>
+</table></div>
+<div class="pn"><h3>📊 自适应机制</h3>
+<div class="g2">
+  <div><div class="al ag"><b>上下文自动裁剪</b><br>实际发送=min(热记忆+项目上下文, 128K-8K预留)。超出→向量压缩→备注层标注</div></div>
+  <div><div class="al ag"><b>降级策略</b><br>DeepSeek挂→简单任务4B本地·复杂暂挂。豆包挂→DeepSeek替代。预算耗尽→切本地</div></div>
+</div>
+<div class="al" style="font-size:11px;color:#6a6a6a;margin-top:8px">
+<b>看不懂参数?</b> 没关系——系统自动选最优配置。想了解就在终端问"temperature是什么意思"。</div></div>`;
+}
+
+
+// ═══ 本体聊天 (完整权限·终端内嵌) ═══
+
+// ═══ 本体小镇 (完整/town嵌入·管理员权限) ═══
+function chatPanel(){
+  document.getElementById('content').innerHTML=`
+<div class="pn" style="padding:0;overflow:hidden"><h3 style="padding:10px 14px;margin:0">🏘️ 本体小镇 · 完整权限 <span style="font-size:10px;color:#a33">⚠ 可改代码</span></h3>
+<iframe src="/town-admin" style="width:100%;height:calc(100vh - 80px);border:none"></iframe></div>`;
+}
+
+// ═══ 设置 ═══
+function settings(){
+  document.getElementById('content').innerHTML=`<div class="pn"><h3>⚙ 铸造圣殿设置</h3>
+<div class="g2">
+  <div class="pn"><h4>🔑 修改管理员密码</h4>
+    <input type="password" id="sold" placeholder="当前密码" style="margin-bottom:6px">
+    <input type="password" id="snew" placeholder="新密码" style="margin-bottom:6px">
+    <input type="password" id="snew2" placeholder="确认新密码" style="margin-bottom:6px">
+    <button onclick="changePw()">修改密码</button><span id="pw-msg" style="font-size:10px;margin-left:8px"></span></div>
+  <div class="pn"><h4>ℹ 当前状态</h4>
+    <div class="al ag">登录验证: 已关闭 (自用模式)</div>
+    <div class="al" style="font-size:10px;color:#6a6a6a">如需重新开启登录，请通过诺亚本体终端说"开启管理员登录"</div>
+  </div>
+</div></div>`;
+}
+async function changePw(){
+  const o=document.getElementById('sold').value,n1=document.getElementById('snew').value,n2=document.getElementById('snew2').value;
+  if(n1!==n2){document.getElementById('pw-msg').textContent='两次密码不一致';return}
+  const r=await(await fetch('/api/admin/change-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({old_password:o,new_password:n1})})).json();
+  document.getElementById('pw-msg').textContent=r.status==='ok'?'✅ 已修改':(r.error||'失败');
+}
+
+function system(){document.getElementById('content').innerHTML=`<div class="pn"><h3>⚡ 系统控制</h3><div class="al ay">建议通过「诺亚本体终端」对话执行——直接说"备份数据库"即可</div>
+<button onclick="sys('backup')">📦 备份</button><button onclick="sys('health')" style="margin-left:6px">🩺 健康</button><button onclick="sys('sync')" style="margin-left:6px">📡 同步远征</button><pre id="sr" style="margin-top:8px;font-size:11px;color:#888"></pre></div>`}
+async function sys(a){document.getElementById('sr').textContent='执行中...';try{const r=await(await fetch('/api/admin/system/'+a,{method:'POST'})).json();document.getElementById('sr').textContent=JSON.stringify(r,null,2)}catch(e){}}
+
+async function health(){const c=document.getElementById('content');try{const r=await(await fetch('/api/admin/system/health',{method:'POST'})).json();c.innerHTML='<div class="pn"><h3>🩺 健康报告 <span class="rf" onclick="go(\'health\')">刷新</span></h3><pre style="font-size:11px;color:#aaa">'+JSON.stringify(r,null,2)+'</pre></div>'}catch(e){}}
+
+load('arch');
+setInterval(()=>{document.getElementById('clk').textContent=new Date().toLocaleTimeString()},1000);
+</script>
+</body>
+</html>

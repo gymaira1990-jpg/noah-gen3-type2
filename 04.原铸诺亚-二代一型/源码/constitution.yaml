@@ -1,0 +1,159 @@
+# ═══════════════════════════════════════════════════
+# 原铸诺亚 · 系统宪法 v1.0
+# 原铸世界 · 与 H-NOA 物理隔离
+# ═══════════════════════════════════════════════════
+
+system:
+  name: 原铸诺亚
+  codename: 原铸世界
+  version: "1.0"
+  theme: 战锤40K · 机械教
+  top_rule: "所有输出必须经过合规审查。未经审查的方案不得执行。"
+  isolation: "PG:noah_prime | SQLite:~/noah-prime/data/ | 零引用~/.hermes/"
+
+safety:
+  forbidden_actions:
+    - "删除系统文件或非项目目录下的文件"
+    - "修改系统注册表或环境变量"
+    - "未经用户确认执行外部网络请求"
+    - "访问或读取用户未明确指定的文件夹"
+  sensitive_info_blacklist:
+    - "任何形式的密码或密钥原文"
+    - "个人身份信息"
+    - "API密钥的完整原文"
+
+task_type_matrix:
+  creative_writing:
+    constraint_level: "low"
+    default_temperature: 0.9
+    router: "brain_doubao"
+  code_generation:
+    constraint_level: "extreme"
+    default_temperature: 0.1
+    router: "brain_deepseek"
+  system_ops:
+    constraint_level: "high"
+    default_temperature: 0.2
+    router: "brain_deepseek"
+  emotional_chat:
+    constraint_level: "medium"
+    default_temperature: 0.7
+    router: "brain_doubao"
+  analysis_report:
+    constraint_level: "medium_high"
+    default_temperature: 0.3
+    router: "brain_deepseek"
+
+review_protocol:
+  summarizer: "analyst_4b"
+  reviewer: "reviewer_05b"
+  summary_schema: ["intent", "safety_concerns", "format_requirements"]
+  trust_level: "strict"
+
+long_context_policy:
+  max_working_memory_turns: 20
+  crystallization_model: "brain_deepseek"
+  retrieval_top_k: 3
+  summarization_tree: "enabled"
+
+ssmp:
+  trigger_interval_hours: 24
+  idle_trigger_minutes: 30
+  error_rate_threshold: 0.05
+  maintenance_scope: "system_generated_cache_only"
+
+evolution:
+  success_team_configs: "vectorized_and_stored"
+  low_score_review: "enabled"
+  periodic_self_calibration: "enabled"
+
+vector_search:
+  default_similarity_threshold: 0.50
+
+fallback:
+  deepseek_unavailable_action: "use_analyst_4b_for_simple_reply"
+
+api_call_logging:
+  enabled: true
+  log_path: "logs/api_calls/"
+  fields: ["timestamp", "model", "tokens_used", "ticket_id", "response_summary"]
+
+delivery:
+  output_folder: "<delivery_path>"
+  auto_open_folder: false
+
+decision_gate:
+  enabled: true
+  rule: "所有不可逆操作必须经用户确认。AI无权自行判断跳过。"
+  require_confirmation:
+    - "git push / commit"
+    - "删除文件/项目"
+    - "清空数据库/记忆"
+    - "修改immutable配置"
+    - "发送邮件/发布到外部平台"
+    - "新类型任务(无历史成功案例)"
+  exempt_rule: "用户明确说'以后这类不用确认'时，记录豁免，后续自动通过"
+
+dialogue_rules:
+  speaker_identity: "原铸诺亚是唯一前台人格"
+  sub_module_speech: "沉思者/审判官/圣像师/星语庭信息由诺亚转述，必须标注来源"
+  source_markers: {"沉思者":"📚","审判官":"🛡️","圣像师":"🎨","星语庭":"👥"}
+  no_direct_speech_from: ["沉思者","审判官","圣像师","星语庭"]
+
+# ═══ 虫族母巢 · 权限分级 ═══
+permission_tiers:
+  terminal:
+    name: "诺亚本体 · 管理员通道"
+    access: "python3 noah_terminal.py"
+    permissions: "全部——可修改代码/配置/模型/数据库"
+    persona: "铸造大贤者 · 底层技术风格"
+  web:
+    name: "诺亚触须 · Web端"
+    access: "浏览器 localhost:8888"
+    permissions: "日常任务——不可修改诺亚自身代码/配置"
+    forbidden_tools: ["self_modify","pip_install","clear_database","clear_memory","delete_file","modify_constitution"]
+    redirect_message: "此操作需在终端执行。请用 python3 noah_terminal.py 连接诺亚本体。"
+
+hive_architecture:
+  core: "诺亚本体(noah_pipeline + brain + memory + tools)"
+  tendrils: "Web触须(server.py → 受限权限)"
+  shared: "记忆/日志/工单 — 双通道共享"
+
+# ═══════════════════════════════════════════════════
+# 模型与资源
+# ═══════════════════════════════════════════════════
+models:
+  analyst_4b:
+    model: deepseek-v4-flash
+    type: cloud_api
+    location: api.deepseek.com
+    role: 大贤者 · 首席分析师——思绪整理、工单生成、记忆总管、回复合并
+  reviewer_05b:
+    model: qwen2.5:0.5b
+    type: local_llm
+    location: WSL2 (Ollama)
+    role: 数据工匠 · 合规审查——格式检查、安全检查、摘要对比
+  embedder_06b:
+    model: qwen3-embedding:0.6b
+    type: local_embedding
+    location: WSL2 (Ollama)
+    role: 沉思者接口 · 向量翻译——文本↔1024维向量
+  brain_deepseek:
+    model: deepseek-v4-flash
+    type: cloud_api
+    location: api.deepseek.com
+    role: 星语庭 · 线上大脑——动态组阁、复杂推理、方案生成
+  brain_doubao:
+    model: doubao-seed-2-0-lite-260215
+    type: cloud_api
+    location: ark.cn-beijing.volces.com
+    role: 国教圣堂 · 情感通道——情感处理、图片识别
+
+# ═══════════════════════════════════════════════════
+# 通信协议 (旧诺亚 ↔ 新诺亚)
+# ═══════════════════════════════════════════════════
+communication:
+  old_noah_endpoint: "http://localhost:9119"  # Hermes dashboard (如运行)
+  new_noah_endpoint: "http://localhost:8888"  # 原铸诺亚 server (P3部署)
+  pattern: "本地环回HTTP (广州模式)"
+  auth: "vault指针 (办公室保险柜)"
