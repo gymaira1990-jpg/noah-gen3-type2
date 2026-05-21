@@ -1,0 +1,29 @@
+{
+  "project": "原铸诺亚",
+  "version": "2.0.1",
+  "codename": "Primaris Genesis",
+  "released": "2026-05-15",
+  "framework": {
+    "name": "Hermes Agent",
+    "version": "0.13.0"
+  },
+  "modules": [
+    { "id": "NCP-007", "name": "P4 Router", "version": "2.0.1", "status": "active" },
+    { "id": "NCP-008", "name": "知识吸收系统", "version": "1.7.0", "status": "active" },
+    { "id": "NCP-009", "name": "进化工作流", "version": "1.0.0", "status": "active" },
+    { "id": "NCP-010", "name": "记忆档案馆系统", "version": "1.2.2", "status": "active", "submodules": [
+      { "id": "NCP-010.1", "name": "noah-memory-core", "version": "1.2.2" },
+      { "id": "NCP-010.2", "name": "retrieval-protocol", "version": "2.0.0" },
+      { "id": "NCP-010.3", "name": "memory-lifecycle-theory", "version": "0.2.0" }
+    ]},
+    { "id": "NCP-011", "name": "安全门闸", "version": "1.1.0", "status": "active" },
+    { "id": "NCP-012", "name": "TFC任务系统", "version": "1.3.0", "status": "active" },
+    { "id": "NCP-013", "name": "FC存档系统/全量灾备", "version": "2.0.0", "status": "active" }
+  ],
+  "infrastructure": {
+    "database": "PostgreSQL 16 + pgvector",
+    "ollama_gpu": "qwen3.5:4b (port 11434)",
+    "ollama_cpu": "cpu-qwen3.5:4b-compress + embed-cpu (port 11435)",
+    "runtime": "WSL2 / Ubuntu"
+  }
+}
