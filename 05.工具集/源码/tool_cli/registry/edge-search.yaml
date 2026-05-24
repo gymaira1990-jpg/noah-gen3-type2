@@ -1,0 +1,18 @@
+# edge-search.yaml — 示例工具注册表条目
+# 放一个 YAML 文件到 registry/ 目录 = 注册一个工具
+name: edge-search
+type: local
+description: "Edge CDP 真实浏览器搜索"
+capabilities:
+  - web_search
+  - web_crawl
+actions:
+  search: "python3 scripts/edge_cdp.py search {query} {engine}"
+  crawl: "python3 scripts/edge_cdp.py crawl {url}"
+  check: "python3 scripts/edge_cdp.py check"
+health:
+  command: "python3 scripts/edge_cdp.py check"
+  timeout: 10
+  expect:
+    field: connected
+    value: true

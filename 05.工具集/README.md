@@ -14,9 +14,26 @@
 
 ## 源码
 
-| 文件 | 行数 | 说明 |
-|:-----|:----:|:------|
+| 文件/目录 | 行数 | 说明 |
+|:----------|:----:|:------|
 | [edge_cdp.py](./源码/edge_cdp.py) | ~260 | 纯 stdlib CDP 浏览器控制 |
+| [tool_cli/](./源码/tool_cli/) | ~456 | 统一工具管理 CLI 系统 |
+
+### tool CLI 架构
+
+```
+源码/tool_cli/
+├── tool                  ← 入口点
+├── core/
+│   ├── router.py         ← 子命令自动发现
+│   ├── registry.py       ← YAML 注册表+健康检查
+│   ├── base.py           ← Command 基类
+│   └── display.py        ← 输出格式化
+├── actions/
+│   └── search.py         ← 搜索命令示例
+└── registry/
+    └── edge-search.yaml  ← 工具注册示例
+```
 
 ## 使用速览
 

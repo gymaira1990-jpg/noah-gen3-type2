@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+"""
+tool — 统一工具管理 CLI
+
+注册表驱动，自动发现 YAML 定义的工具。
+子命令通过 actions/ 目录按需加载。
+
+用法:
+  tool search "关键词"          — 智能搜索
+  tool status                    — 健康看板
+  tool registry list             — 工具清单
+"""
+import sys, os
+
+TOOL_HOME = os.getenv("TOOL_HOME", os.path.dirname(os.path.abspath(__file__)))
+if TOOL_HOME not in sys.path:
+    sys.path.insert(0, TOOL_HOME)
+
+from core.router import dispatch
+
+if __name__ == "__main__":
+    sys.exit(dispatch(sys.argv[1:]))
