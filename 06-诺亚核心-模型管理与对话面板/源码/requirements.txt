@@ -1,0 +1,5 @@
+# 诺亚核心 · 运行时依赖
+pyyaml>=6.0
+fastapi>=0.100
+uvicorn>=0.24
+jinja2>=3.1

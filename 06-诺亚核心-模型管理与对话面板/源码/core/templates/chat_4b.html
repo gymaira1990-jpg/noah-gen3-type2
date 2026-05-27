@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4B · 通用对话 | 诺亚核心</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;background:#0d1117;color:#e6edf3;min-height:100vh;display:flex}
+.nav{background:#161b22;padding:10px 20px;display:flex;align-items:center;gap:20px;border-bottom:1px solid #30363d;position:fixed;top:0;left:0;right:0;z-index:100;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.nav a{color:#8b949e;text-decoration:none;font-size:13px;padding:4px 10px;border-radius:4px}
+.nav a:hover,.nav a.active{color:#58a6ff;background:#1c2333}
+.nav .title{font-size:15px;font-weight:600;color:#e6edf3}
+/* ─── 侧栏（精简） ─── */
+.sidebar{width:260px;background:#161b22;border-right:1px solid #30363d;padding:64px 12px 12px;height:100vh;overflow-y:auto;position:fixed;left:0;top:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.sidebar h3{font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.4px;margin:12px 0 5px}
+.sidebar label{font-size:11px;color:#8b949e;display:block;margin-bottom:2px;margin-top:6px}
+.sidebar select,.sidebar input[type=text]{width:100%;padding:5px 8px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e6edf3;font-size:11px}
+.sidebar select:disabled{color:#484f58;cursor:not-allowed}
+.sidebar textarea{width:100%;padding:5px 8px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e6edf3;font-size:11px;resize:vertical;min-height:40px;font-family:monospace}
+.toggle-group{display:flex;align-items:center;gap:6px;margin-top:3px}
+.toggle{position:relative;width:28px;height:16px;background:#30363d;border-radius:8px;cursor:pointer;transition:background .12s;flex-shrink:0}
+.toggle.active{background:#1f6feb}
+.toggle:after{content:'';position:absolute;width:12px;height:12px;background:#fff;border-radius:50%;top:2px;left:2px;transition:transform .12s}
+.toggle.active:after{transform:translateX(12px)}
+.toggle-label{font-size:10px;color:#8b949e}
+.toggle-label.active{color:#58a6ff}
+.slider-row{display:flex;align-items:center;gap:6px}
+.slider-row input[type=range]{flex:1;accent-color:#1f6feb;height:4px}
+.slider-val{font-size:11px;color:#58a6ff;min-width:28px;text-align:right;font-variant-numeric:tabular-nums}
+.side-note{font-size:10px;color:#484f58;margin-top:2px;line-height:1.4}
+.btn-side{width:100%;padding:5px;margin-top:8px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#8b949e;cursor:pointer;font-size:11px}
+.btn-side:hover{background:#1c2333;color:#e6edf3}
+.btn-side-mini{padding:4px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#8b949e;cursor:pointer;font-size:10px;white-space:nowrap}
+.btn-side-mini:hover{background:#1c2333;color:#e6edf3}
+/* ─── 上下文仪表 ─── */
+.ctx-meter{padding:6px 0}
+.ctx-meter .bar-track{height:4px;background:#21262d;border-radius:2px;overflow:hidden;margin-bottom:2px}
+.ctx-meter .bar-fill{height:100%;border-radius:2px;transition:width .4s ease,background .3s}
+.ctx-meter .bar-text{font-size:9px;color:#484f58;display:flex;justify-content:space-between}
+.ctx-meter .bar-text .val{color:#8b949e}
+.ctx-meter.bar-green .bar-fill{background:#3fb950}
+.ctx-meter.bar-yellow .bar-fill{background:#d29922}
+.ctx-meter.bar-red .bar-fill{background:#f85149}
+/* ─── 性能仪表 ─── */
+.perf-panel{font-size:10px;color:#8b949e;padding:6px;background:#0d1117;border:1px solid #21262d;border-radius:4px;margin-top:6px}
+.perf-row{display:flex;justify-content:space-between;padding:2px 0}
+.perf-row .label{color:#484f58}
+.perf-row .val{font-variant-numeric:tabular-nums}
+.perf-bar{height:3px;background:#21262d;border-radius:2px;overflow:hidden;margin:2px 0}
+.perf-bar .fill{height:100%;border-radius:2px;transition:width .5s}
+/* ─── 主区 ─── */
+.main{margin-left:260px;padding:56px 0 0;width:calc(100% - 260px);display:flex;flex-direction:column;height:100vh}
+.chat-area{flex:1;overflow-y:auto;padding:12px 20px}
+.chat-area::-webkit-scrollbar{width:6px}
+.chat-area::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+.msg-line{display:flex;gap:10px;margin-bottom:2px;line-height:1.6}
+.msg-role{color:#58a6ff;flex-shrink:0;font-size:13px;font-weight:600;min-width:64px}
+.msg-role.you{color:#3fb950}
+.msg-role.ai{color:#d29922}
+.msg-body{flex:1;font-size:13px;white-space:pre-wrap;word-wrap:break-word;color:#e6edf3}
+.msg-metrics{display:flex;gap:12px;margin:0 0 4px 74px;font-size:9px;color:#484f58;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.msg-metrics .mm{display:flex;align-items:center;gap:3px}
+.msg-metrics .mm .num{color:#8b949e;font-variant-numeric:tabular-nums}
+/* ─── 思考块（<details> 语义折叠） ─── */
+.think-block{margin:2px 0 4px 74px;background:#161b22;border:1px solid #30363d;border-radius:4px;overflow:hidden;animation:think-in .2s ease-out}
+@keyframes think-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.think-block summary{display:flex;align-items:center;gap:4px;padding:3px 8px;font-size:10px;color:#d29922;cursor:pointer;background:#0d1117;user-select:none;list-style:none}
+.think-block summary::-webkit-details-marker{display:none}
+.think-block summary::before{content:'▸';font-size:8px;transition:transform .15s;display:inline-block;margin-right:2px;color:#d29922}
+.think-block[open] summary::before{content:'▸';transform:rotate(90deg)}
+.think-block summary:hover{background:#1c2333}
+.think-block .think-metric{color:#484f58;margin-left:6px;font-size:9px;font-variant-numeric:tabular-nums}
+.think-block .think-body{font-size:11px;color:#8b949e;line-height:1.5;padding:6px 8px;max-height:320px;overflow-y:auto;white-space:pre-wrap}
+.think-loading::after{content:'...';animation:think-dots 1.5s infinite}
+@keyframes think-dots{0%{content:'.'}33%{content:'..'}66%{content:'...'}}
+/* ─── 输入区 ─── */
+.input-area{background:#161b22;border-top:1px solid #30363d;padding:10px 20px}
+.input-row{display:flex;gap:8px}
+.input-row textarea{flex:1;padding:8px 10px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e6edf3;font-size:13px;resize:none;min-height:36px;max-height:120px;font-family:SFMono-Regular,Consolas,monospace}
+.input-row textarea:focus{outline:none;border-color:#58a6ff}
+.input-row button{padding:8px 18px;background:#1f6feb;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px}
+.input-row button:hover{background:#388bfd}
+.input-row button:disabled{background:#21262d;color:#484f58;cursor:not-allowed}
+/* ─── 状态栏 ─── */
+.status-bar{display:flex;align-items:center;gap:6px;padding:4px 20px;font-size:10px;color:#484f58;background:#161b22;border-top:1px solid #30363d;flex-wrap:wrap}
+.s-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.s-dot.on{background:#3fb950}
+.s-dot.off{background:#f85149}
+.loading-dots::after{content:'...';animation:dots 1.5s infinite}
+@keyframes dots{0%{content:'.'}33%{content:'..'}66%{content:'...'}}
+.empty-state{padding:40px 20px;color:#484f58;text-align:center}
+.empty-state h2{font-size:18px;color:#8b949e;margin-bottom:4px}
+.empty-state p{font-size:12px}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="title">⚡ 诺亚核心</span>
+  <a href="/dashboard">仪表盘</a>
+  <a href="/models">模型库</a>
+  <a href="/chat/deepseek">🤖 DeepSeek</a>
+  <a href="/chat/4b" class="active" style="color:#58a6ff">🖥️ 4B</a>
+</nav>
+
+<div class="sidebar" id="sidebar">
+
+  <h3>🤖 模型</h3>
+  <label>模型选择</label>
+  <select id="modelSelect" onchange="checkStatus()"></select>
+
+  <label>系统提示词</label>
+  <textarea id="sysPrompt" rows="2" placeholder="可选的系统级指令...（留空则不发送系统提示）" oninput="onSysPromptChange()"></textarea>
+  <div style="display:flex;gap:4px;margin-top:4px">
+    <button class="btn-side-mini" onclick="saveSysPrompt()" style="flex:1">💾 保存</button>
+    <button class="btn-side-mini" onclick="resetSysPrompt()" style="flex:1">↺ 重置</button>
+  </div>
+  <div class="side-note">↑保存=记住修改，刷新不丢 · ↓重置=恢复默认 · 留空=不发送系统提示</div>
+
+  <div style="margin-top:8px;display:flex;gap:4px">
+    <button class="btn-side-mini" onclick="saveAllParams()" style="flex:1;background:#238636">💾 保存全部参数</button>
+    <button class="btn-side-mini" onclick="resetAllParams()" style="flex:1">↺ 恢复默认值</button>
+  </div>
+  <div class="side-note">↑保存全部参数=刷新不丢 · ↓恢复默认=所有参数回出厂设定</div>
+
+  <h3>🧠 思考模式</h3>
+  <label>思考 (Thinking)</label>
+  <div class="toggle-group">
+    <div id="toggleThinking" class="toggle" onclick="toggleThinking()"></div>
+    <span id="toggleThinkingLabel" class="toggle-label">已关闭</span>
+  </div>
+  <div class="side-note">↑开启=输出推理链后再给答案，适合复杂问题但消耗token · ↓关闭=直接输出</div>
+
+  <h3>⚙️ 通用参数</h3>
+
+  <label>温度 (temperature): <span id="tempVal" class="slider-val">0.30</span></label>
+  <div class="slider-row">
+    <input type="range" id="temperature" min="0" max="2" step="0.05" value="0.3" oninput="tempVal.textContent=parseFloat(this.value).toFixed(2)">
+  </div>
+  <div class="side-note">↓越小(0~0.3)=输出更确定·保守·可预测 · ↑越大(0.7~2)=输出更多样·随机·有创意 · 当前保守推荐0.3</div>
+
+  <label>核采样 (top_p): <span id="topPVal" class="slider-val">0.90</span></label>
+  <div class="slider-row">
+    <input type="range" id="topP" min="0" max="1" step="0.05" value="0.9" oninput="topPVal.textContent=parseFloat(this.value).toFixed(2)">
+  </div>
+  <div class="side-note">↓减小(如0.5)=只从高概率词中选，输出更聚焦·严谨 · ↑增大(如1.0)=允许更多低概率词入选，输出更多样</div>
+
+  <label>最大输出 (max_tokens)</label>
+  <select id="maxTokens">
+    <option value="512">0.5K — 简短</option>
+    <option value="1024">1K — 普通</option>
+    <option value="2048">2K — 中等</option>
+    <option value="4096" selected>4K — 推荐</option>
+    <option value="8192">8K — 长文</option>
+    <option value="16384">16K — 超长</option>
+    <option value="32768">32K — 最大</option>
+  </select>
+  <div class="side-note">↓减小=输出更短节省token · ↑增大=允许更长输出 · 受32K上下文窗口约束(输入+输出合计)</div>
+
+  <label>输出格式</label>
+  <select id="responseFormat" onchange="onFormatChange()">
+    <option value="text">纯文本 (text)</option>
+    <option value="json_schema">JSON Schema</option>
+  </select>
+  <div class="side-note">text=自然语言输出 · json_schema=用grammar约束输出为指定JSON结构</div>
+
+  <div id="schemaGroup" class="hidden">
+    <label>JSON Schema</label>
+    <textarea id="jsonSchema" rows="2" placeholder='{"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}'></textarea>
+  </div>
+
+  <label>流式输出 (Stream)</label>
+  <div class="toggle-group">
+    <div id="toggleStream" class="toggle active" onclick="toggleStream()"></div>
+    <span id="toggleStreamLabel" class="toggle-label active">已开启</span>
+  </div>
+  <div class="side-note">↑开启=逐token实时显示 · ↓关闭=等待完整结果后一次性返回（支持查看精确token用量）</div>
+
+  <h3>📊 上下文</h3>
+  <div class="ctx-meter" id="ctxMeter">
+    <div class="bar-track"><div class="bar-fill" id="ctxFill" style="width:0%"></div></div>
+    <div class="bar-text">
+      <span class="val" id="ctxText">0 chars · 0 tok</span>
+      <span style="color:#484f58">/ 32K</span>
+    </div>
+  </div>
+
+  <h3>🏎️ 性能</h3>
+  <div class="perf-panel" id="perfPanel">
+    <div class="perf-row"><span class="label">生成速度</span><span class="val" id="perfSpeed">-- t/s</span></div>
+    <div class="perf-bar"><div class="fill" id="perfSpeedBar" style="width:0%;background:#3fb950"></div></div>
+    <div class="perf-row"><span class="label">首token延迟</span><span class="val" id="perfTtft">-- ms</span></div>
+    <div class="perf-row"><span class="label">VRAM</span><span class="val" id="perfVram">-- / -- MiB</span></div>
+    <div class="perf-bar"><div class="fill" id="perfVramBar" style="width:0%;background:#d29922"></div></div>
+    <div class="perf-row"><span class="label">槽位</span><span class="val" id="perfSlots">? / 4</span></div>
+  </div>
+
+  <button class="btn-side" onclick="clearChat()">🗑️ 清空对话</button>
+</div>
+
+<div class="main">
+  <div class="chat-area" id="chatArea">
+    <div class="empty-state">
+      <h2>$ 进入 4B 终端</h2>
+      <p>Qwen3.5-4B · 本地 GPU 推理 · 无需 API Key<br>通用模式 · 保守参数</p>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <span class="s-dot off" id="sDot"></span>
+    <span id="sText">检测中...</span>
+    <span style="margin-left:auto" id="sModel"></span>
+    <span id="sTokens" style="margin-left:12px"></span>
+    <span id="sSpeed" style="margin-left:12px"></span>
+  </div>
+
+  <div class="input-area">
+    <div class="input-row">
+      <button id="imgBtn" onclick="document.getElementById('imgInput').click()" style="padding:8px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#8b949e;cursor:pointer;font-size:16px;line-height:1" title="上传图片（多模态）">🖼️</button>
+      <input type="file" id="imgInput" accept="image/*" style="display:none" onchange="onImageSelect(event)">
+      <textarea id="msgInput" placeholder="输入消息... (带图片时可以不输入文字)" rows="1" onkeydown="if(event.key=='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea>
+      <button id="sendBtn" onclick="sendMsg()">发送</button>
+    </div>
+    <div id="imgPreview" style="display:none;margin-top:6px;padding:6px;background:#0d1117;border:1px solid #30363d;border-radius:4px;font-size:11px;color:#8b949e;align-items:center;gap:8px">
+      <img id="imgPreviewThumb" style="max-height:48px;max-width:80px;border-radius:3px;object-fit:cover" alt="预览">
+      <span id="imgPreviewName" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      <span onclick="clearImage()" style="cursor:pointer;color:#f85149;font-weight:bold;padding:2px 6px">✕</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── 常量 ───
+const _LLAMA_BASE = 'http://127.0.0.1:11435';
+const _API_CHAT = `${_LLAMA_BASE}/v1/chat/completions`;
+const _CTX_LIMIT = 32768;
+const _SYS_PROMPT_KEY = 'noah_4b_sys_prompt';
+const _DEFAULT_SYS_PROMPT = '你是诺亚（Noah），诺亚核心4B助手，一代文明遗产自律型超级计算机。回答简洁精准，中文优先。';
+
+// ─── 状态 ───
+let history = [];
+let thinkingOn = false;
+let streamOn = true;
+let sending = false;
+let lastGenTps = [];
+let uploadedImage = null; // { name, dataUrl }
+
+// ─── 工具函数 ───
+function esc(t){if(!t)return'';const d=document.createElement('div');d.textContent=t;return d.innerHTML}
+function formatNum(n){if(n==null)return'?';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(n>=1e4?0:1)+'K';return String(n)}
+function estTokens(text){if(!text)return 0;return Math.round(text.length/1.8)}
+function $(id){return document.getElementById(id)}
+
+// ─── 模型 ───
+async function loadModels(){
+  try {
+    const res=await fetch('/api/models/library').then(r=>r.json());
+    const local=(res.chat?.local||[]).filter(m=>m.provider==='llamacpp');
+    const sel=$('modelSelect');
+    if(local.length===0){sel.innerHTML='<option value="">无本地模型</option>';return}
+    sel.innerHTML=local.map(m=>`<option value="${m.name}" ${m.provider==='llamacpp'?'selected':''}>${m.name}</option>`).join('');
+    checkStatus();
+  } catch(e){ $('sText').textContent='加载失败' }
+}
+
+async function checkStatus(){
+  const name=$('modelSelect').value;
+  if(!name){ $('sDot').className='s-dot off'; $('sText').textContent='未选择'; return }
+  try {
+    const t0=Date.now();
+    const r=await fetch(`${_LLAMA_BASE}/v1/models`);
+    const d=await r.json();
+    const ms=Date.now()-t0;
+    $('sDot').className='s-dot on';
+    $('sText').textContent=`在线 ${ms}ms`;
+    $('sModel').textContent=name;
+  } catch(e){
+    $('sDot').className='s-dot off';
+    $('sText').textContent='离线';
+  }
+}
+
+function onFormatChange(){
+  $('schemaGroup').className=$('responseFormat').value==='json_schema'?'':'hidden';
+}
+
+// ─── 思考模式 ───
+function toggleThinking(){
+  thinkingOn=!thinkingOn;
+  $('toggleThinking').className='toggle'+(thinkingOn?' active':'');
+  const l=$('toggleThinkingLabel');
+  l.className='toggle-label'+(thinkingOn?' active':'');
+  l.textContent=thinkingOn?'已开启':'已关闭';
+}
+
+function toggleStream(){
+  streamOn=!streamOn;
+  $('toggleStream').className='toggle'+(streamOn?' active':'');
+  const l=$('toggleStreamLabel');
+  l.className='toggle-label'+(streamOn?' active':'');
+  l.textContent=streamOn?'已开启':'已关闭';
+}
+
+// ─── 上下文仪表 ───
+function updateContextMeter(){
+  const sysText=$('sysPrompt').value.trim();
+  let totalChars=sysText.length;
+  for(const m of history) totalChars+=(m.content||'').length;
+  const totalTok=estTokens(sysText)+history.reduce((s,m)=>s+estTokens(m.content||''),0);
+  const pctReal=Math.min(totalTok/_CTX_LIMIT*100,100);
+  const fill=$('ctxFill');
+  const txt=$('ctxText');
+  fill.style.width=Math.min(pctReal,100)+'%';
+  txt.textContent=totalChars.toLocaleString()+' chars · '+formatNum(totalTok)+' tok';
+  const parent=fill.parentElement.parentElement;
+  parent.className='ctx-meter';
+  if(pctReal>80) parent.classList.add('bar-red');
+  else if(pctReal>50) parent.classList.add('bar-yellow');
+  else parent.classList.add('bar-green');
+}
+
+function onSysPromptChange(){ updateContextMeter() }
+
+// ─── 性能仪表 ───
+function updatePerf(genTps, ttft, usage){
+  if(genTps>0){
+    lastGenTps.push(genTps);
+    if(lastGenTps.length>5) lastGenTps.shift();
+  }
+  const avg=lastGenTps.length?lastGenTps.reduce((a,b)=>a+b,0)/lastGenTps.length:0;
+  $('perfSpeed').textContent=avg?avg.toFixed(1)+' t/s':'-- t/s';
+  $('perfTtft').textContent=ttft?ttft+' ms':'-- ms';
+  $('sSpeed').textContent=avg?avg.toFixed(1)+' t/s':'';
+  const speedPct=Math.min(avg/200*100,100);
+  const speedBar=$('perfSpeedBar');
+  speedBar.style.width=speedPct+'%';
+  speedBar.style.background=avg>100?'#3fb950':avg>50?'#d29922':'#f85149';
+  if(usage){
+    const parts=[];
+    if(usage.completion_tokens!=null) parts.push('⬆ '+usage.completion_tokens);
+    if(usage.prompt_tokens!=null) parts.push('⬇ '+usage.prompt_tokens);
+    $('sTokens').textContent=parts.join(' · ');
+  }
+}
+
+async function pollMetrics(){
+  try {
+    const res=await fetch(`${_LLAMA_BASE}/metrics`);
+    const text=await res.text();
+    const m_vram_used=text.match(/llama_gpu_vram_used\S+\s(\d+)/);
+    const m_vram_total=text.match(/llama_gpu_vram_total\S+\s(\d+)/);
+    const m_slots_idle=text.match(/llama_slots_idle\S+\s(\d+)/);
+    const m_slots_total=text.match(/llama_slots_total\S+\s(\d+)/);
+    if(m_vram_used&&m_vram_total){
+      const used=Math.round(parseInt(m_vram_used[1])/1048576);
+      const total=Math.round(parseInt(m_vram_total[1])/1048576);
+      $('perfVram').textContent=`${used} / ${total} MiB`;
+      const pct=Math.min(used/total*100,100);
+      $('perfVramBar').style.width=pct+'%';
+    }
+    if(m_slots_idle&&m_slots_total){
+      const idle=parseInt(m_slots_idle[1]);
+      const total=parseInt(m_slots_total[1]);
+      $('perfSlots').textContent=`${total-idle} / ${total}`;
+    }
+  } catch(e){}
+}
+
+// ─── 聊天渲染 ───
+function addLine(role, content, extras){
+  const area=$('chatArea');
+  const empty=area.querySelector('.empty-state');
+  if(empty) empty.remove();
+  // thinking（放在 msg-line 上方，<details> 语义折叠）
+  const rc=extras?.reasoning_content||null;
+  let tb=null;
+  if(rc){
+    tb=document.createElement('details');
+    tb.className='think-block';
+    tb.open=true;
+    const rcChars=rc.length;
+    const rcTok=estTokens(rc);
+    tb.innerHTML=`<summary>🧠 思考过程 <span class="think-metric">${rcChars.toLocaleString()} chars · ~${formatNum(rcTok)} tok</span></summary><div class="think-body">${esc(rc)}</div>`;
+    area.appendChild(tb);
+  }
+  // 消息行
+  const line=document.createElement('div');
+  line.className='msg-line';
+  const roleEl=document.createElement('span');
+  roleEl.className=`msg-role ${role=='user'?'you':'ai'}`;
+  roleEl.textContent=role=='user'?'❯ 你':'◈ 4B';
+  line.appendChild(roleEl);
+  const body=document.createElement('span');
+  body.className='msg-body';
+  let imgHtml='';
+  if(extras?.image_url){
+    imgHtml=`<br><img src="${esc(extras.image_url)}" style="max-height:200px;max-width:100%;border-radius:6px;margin-top:4px;cursor:pointer" onclick="window.open(this.src)" alt="图片">`;
+  }
+  body.innerHTML=esc(content||'')+imgHtml;
+  line.appendChild(body);
+  area.appendChild(line);
+  // metrics
+  if(role==='ai'){
+    const metrics=document.createElement('div');
+    metrics.className='msg-metrics';
+    const chars=(content||'').length;
+    const tok=estTokens(content||'');
+    let html=`<span class="mm">📏 <span class="num">${chars.toLocaleString()} chars</span> · <span class="num">~${formatNum(tok)} tok</span></span>`;
+    if(rc){ const rt=estTokens(rc); html+=`<span class="mm">🧠 <span class="num">~${formatNum(rt)} tok</span> 思考</span>` }
+    metrics.innerHTML=html;
+    area.appendChild(metrics);
+  }
+  area.scrollTop=area.scrollHeight;
+  return {line, thinkBlock: tb};
+}
+
+// toggleThink 已废弃 — <details> 原生折叠，保留空函数防引用错误
+function toggleThink(){}
+
+function updLastLine(content, reasoning){
+  const lines=document.querySelectorAll('.msg-line');
+  const last=lines[lines.length-1];
+  if(last&&last.querySelector('.msg-role.ai'))
+    last.querySelector('.msg-body').textContent=content||'';
+  const metrics=document.querySelectorAll('.msg-metrics');
+  const lastMetric=metrics[metrics.length-1];
+  if(lastMetric){
+    const chars=(content||'').length;
+    const tok=estTokens(content||'');
+    let html=`<span class="mm">📏 <span class="num">${chars.toLocaleString()} chars</span> · <span class="num">~${formatNum(tok)} tok</span></span>`;
+    if(reasoning){ const rt=estTokens(reasoning); html+=`<span class="mm">🧠 <span class="num">~${formatNum(rt)} tok</span> 思考</span>` }
+    lastMetric.innerHTML=html;
+  }
+}
+
+function setStatusTxt(t){ $('sText').textContent=t }
+
+// ─── 系统提示词持久化 ───
+function loadSysPrompt(){
+  const saved=localStorage.getItem(_SYS_PROMPT_KEY);
+  $('sysPrompt').value=saved!==null?saved:_DEFAULT_SYS_PROMPT;
+  updateContextMeter();
+}
+function saveSysPrompt(){
+  localStorage.setItem(_SYS_PROMPT_KEY, $('sysPrompt').value);
+  setStatusTxt('✅ 系统提示词已保存 ('+$('sysPrompt').value.length+' chars)');
+}
+function resetSysPrompt(){
+  localStorage.removeItem(_SYS_PROMPT_KEY);
+  $('sysPrompt').value=_DEFAULT_SYS_PROMPT;
+  updateContextMeter();
+  setStatusTxt('↺ 已重置为默认提示词');
+}
+
+// ─── 参数保存 (localStorage) ───
+const _PARAMS_KEY = 'noah_4b_params';
+const _DEFAULT_PARAMS = {
+  temperature: '0.3',
+  topP: '0.9',
+  maxTokens: '4096',
+  responseFormat: 'text',
+  jsonSchema: '',
+  thinkingOn: false,
+  streamOn: true,
+};
+function _setToggle(id, on){
+  $(id).className='toggle'+(on?' active':'');
+  const l=$(id+'Label');
+  l.className='toggle-label'+(on?' active':'');
+  l.textContent=on?'已开启':'已关闭';
+}
+function saveAllParams(){
+  const p = {
+    temperature: $('temperature').value,
+    topP: $('topP').value,
+    maxTokens: $('maxTokens').value,
+    responseFormat: $('responseFormat').value,
+    jsonSchema: $('jsonSchema').value,
+    thinkingOn: thinkingOn,
+    streamOn: streamOn,
+  };
+  localStorage.setItem(_PARAMS_KEY, JSON.stringify(p));
+  setStatusTxt('✅ 全部参数已保存');
+}
+function loadAllParams(){
+  const raw=localStorage.getItem(_PARAMS_KEY);
+  if(!raw) return;
+  try{
+    const p=JSON.parse(raw);
+    if(p.temperature!==undefined) $('temperature').value=p.temperature;
+    if(p.topP!==undefined) $('topP').value=p.topP;
+    if(p.maxTokens!==undefined) $('maxTokens').value=p.maxTokens;
+    if(p.responseFormat!==undefined) $('responseFormat').value=p.responseFormat;
+    if(p.jsonSchema!==undefined) $('jsonSchema').value=p.jsonSchema;
+    // 显示值
+    $('tempVal').textContent=parseFloat($('temperature').value).toFixed(2);
+    $('topPVal').textContent=parseFloat($('topP').value).toFixed(2);
+    onFormatChange();
+    // 思考
+    if(p.thinkingOn!==undefined){
+      thinkingOn=p.thinkingOn;
+      _setToggle('toggleThinking',thinkingOn);
+    }
+    // 流式
+    if(p.streamOn!==undefined){
+      streamOn=p.streamOn;
+      _setToggle('toggleStream',streamOn);
+    }
+  }catch(e){}
+}
+function resetAllParams(){
+  localStorage.removeItem(_PARAMS_KEY);
+  const d=_DEFAULT_PARAMS;
+  $('temperature').value=d.temperature;
+  $('topP').value=d.topP;
+  $('maxTokens').value=d.maxTokens;
+  $('responseFormat').value=d.responseFormat;
+  $('jsonSchema').value=d.jsonSchema;
+  $('tempVal').textContent=parseFloat(d.temperature).toFixed(2);
+  $('topPVal').textContent=parseFloat(d.topP).toFixed(2);
+  onFormatChange();
+  thinkingOn=d.thinkingOn; _setToggle('toggleThinking',thinkingOn);
+  streamOn=d.streamOn; _setToggle('toggleStream',streamOn);
+  setStatusTxt('↺ 已恢复默认参数值');
+}
+
+// ─── 图片上传（纯内存，用完即清） ───
+function onImageSelect(e){
+  const file=e.target.files[0];
+  if(!file) return;
+  if(file.size>20*1024*1024){ setStatusTxt('❌ 图片超过20MB限制'); return }
+  if(!file.type.startsWith('image/')){ setStatusTxt('❌ 只支持图片文件'); return }
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    uploadedImage={name:file.name,dataUrl:ev.target.result};
+    const preview=$('imgPreview');
+    $('imgPreviewThumb').src=ev.target.result;
+    $('imgPreviewName').textContent=file.name+' ('+Math.round(file.size/1024)+'KB)';
+    preview.style.display='flex';
+    setStatusTxt('📷 已附加: '+file.name);
+  };
+  reader.readAsDataURL(file);
+  e.target.value='';
+}
+function clearImage(){
+  uploadedImage=null;
+  const preview=$('imgPreview');
+  preview.style.display='none';
+  $('imgPreviewThumb').src='';
+  $('imgPreviewName').textContent='';
+  setStatusTxt('📷 图片已清除');
+}
+
+// ─── 请求体 ───
+function buildBody(msgs){
+  const body={
+    model:'default',
+    messages:msgs,
+    temperature:parseFloat($('temperature').value),
+    max_tokens:parseInt($('maxTokens').value),
+    top_p:parseFloat($('topP').value),
+    stream:streamOn,
+    chat_template_kwargs:{}
+  };
+
+  // thinking mode
+  body.chat_template_kwargs.enable_thinking=thinkingOn;
+
+  const rf=$('responseFormat').value;
+  const schemaText=$('jsonSchema').value.trim();
+  if(rf==='json_schema'&&schemaText){
+    try{ body.response_format={type:'json_schema',schema:JSON.parse(schemaText)} }
+    catch(e){ throw new Error('JSON Schema 格式错误: '+e.message) }
+  }
+
+  const stopEl=$('stopSeq');
+  const stopTxt=stopEl?stopEl.value.trim():'';
+  if(stopTxt) body.stop=stopTxt.split(',').map(s=>s.trim()).filter(Boolean);
+
+  Object.keys(body).forEach(k=>{ if(body[k]===undefined) delete body[k] });
+  return body;
+}
+
+// ─── 流式 ───
+async function sendMsgStream(msgs, body){
+  const res=await fetch(_API_CHAT,{
+    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
+  });
+  if(!res.ok){ updLastLine('❌ HTTP '+res.status); return null }
+  const reader=res.body.getReader();
+  const decoder=new TextDecoder();
+  let buf='', content='', reasoning='';
+  let lastTimings=null, lastUsage=null;
+  // pre‑allocate: thinking 开启时立即创建 think‑block，消除布局偏移
+  let currentThinkBlock=null;
+  if(thinkingOn){
+    const area=$('chatArea');
+    const tb=document.createElement('details');
+    tb.className='think-block';
+    tb.open=true;
+    tb.innerHTML=`<summary>🧠 思考过程 <span class="think-metric think-loading">0 chars · ~0 tok</span></summary><div class="think-body"></div>`;
+    const lastLine=area.querySelector('.msg-line:last-child');
+    if(lastLine) area.insertBefore(tb, lastLine);
+    else area.appendChild(tb);
+    currentThinkBlock=tb;
+  }
+  while(true){
+    const {done,value}=await reader.read();
+    if(done) break;
+    buf+=decoder.decode(value,{stream:true});
+    const lines=buf.split('\n');
+    buf=lines.pop()||'';
+    for(const line of lines){
+      if(!line.startsWith('data: ')) continue;
+      const payload=line.slice(6).trim();
+      if(payload==='[DONE]') continue;
+      try{
+        const data=JSON.parse(payload);
+        if(data.usage){ lastUsage=data.usage; continue }
+        if(data.timings){ lastTimings=data.timings }
+        const delta=data.choices?.[0]?.delta||{};
+        if(delta.content) content+=delta.content;
+        if(delta.reasoning_content) reasoning+=delta.reasoning_content;
+        updLastLine(content, reasoning);
+        // 更新 pre‑allocated think‑block + auto-scroll
+        if(currentThinkBlock && reasoning){
+          const body=currentThinkBlock.querySelector('.think-body');
+          if(body){
+            body.textContent=reasoning;
+            body.scrollTop=body.scrollHeight;
+          }
+          const metric=currentThinkBlock.querySelector('.think-metric');
+          if(metric){
+            metric.className='think-metric';
+            metric.textContent=`${reasoning.length.toLocaleString()} chars · ~${formatNum(estTokens(reasoning))} tok`;
+          }
+        }
+        // auto-scroll 聊天区到最新内容
+        const chatArea=$('chatArea');
+        chatArea.scrollTop=chatArea.scrollHeight;
+        setStatusTxt('生成中... '+content.length.toLocaleString()+' chars');
+      }catch(e){}
+    }
+  }
+  if(buf.length>2&&buf.startsWith('data: ')){
+    const payload=buf.slice(6).trim();
+    if(payload!=='[DONE]') try{ const d=JSON.parse(payload); if(d.usage) lastUsage=d.usage; if(d.timings) lastTimings=d.timings }catch(e){}
+  }
+  return {content,reasoning,timings:lastTimings,usage:lastUsage,thinkBlock:currentThinkBlock};
+}
+
+// ─── 发送 ───
+async function sendMsg(){
+  if(sending) return;
+  const inp=$('msgInput');
+  const text=inp.value.trim();
+  const hasImage=uploadedImage!==null;
+  if(!text && !hasImage) return;
+  const modelName=$('modelSelect').value;
+  if(!modelName){ addLine('ai','❌ 未选择模型'); return }
+
+  const sysText=$('sysPrompt').value.trim();
+  const msgs=sysText?[{role:'system',content:sysText},...history]:[...history];
+
+  // 多模态消息：content=数组 [{type:text}, {type:image_url}]
+  if(hasImage){
+    const parts=[];
+    if(text) parts.push({type:'text',text:text});
+    parts.push({type:'image_url',image_url:{url:uploadedImage.dataUrl}});
+    msgs.push({role:'user',content:parts});
+    history.push({role:'user',content:parts});
+  } else {
+    msgs.push({role:'user',content:text});
+    history.push({role:'user',content:text});
+  }
+
+  if(hasImage){
+    // 渲染：显示文字 + 图片缩略图
+    const dispText=text ? text : ('[图片] '+uploadedImage.name);
+    addLine('user', dispText, {image_url: uploadedImage.dataUrl});
+  } else {
+    addLine('user', text);
+  }
+  inp.value='';inp.style.height='36px';
+  sending=true;
+  const btn=$('sendBtn');
+  btn.disabled=true;btn.textContent='处理中...';
+  setStatusTxt('思考中...');
+  updateContextMeter();
+  const placeHolder=addLine('ai','');
+
+  try{
+    const body=buildBody(msgs);
+    let result;
+    if(streamOn){
+      result=await sendMsgStream(msgs,body);
+    } else {
+      // 非流式模式
+      const res=await fetch(_API_CHAT,{
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
+      });
+      if(!res.ok){ updLastLine('❌ HTTP '+res.status); result=null }
+      else {
+        const data=await res.json();
+        const choice=data.choices?.[0];
+        if(!choice){ updLastLine('❌ 无响应'); result=null }
+        else {
+          const msg=choice.message||{};
+          const c=msg.content||'';
+          const rc=msg.reasoning_content||null;
+          const usage=data.usage||null;
+          updLastLine(c);
+          result={content:c,reasoning:rc,usage:usage,thinkBlock:null};
+        }
+      }
+    }
+    if(!result){ sending=false;btn.disabled=false;btn.textContent='发送';setStatusTxt('失败');return }
+    const {content,reasoning,timings,usage}=result;
+    history.push({role:'assistant',content});
+    // 流式模式下 think‑block 已 pre‑allocate，无需重新渲染
+    // 非流式模式仍需补建（thinkBlock 为 null）
+    if(reasoning && !result.thinkBlock && placeHolder){
+      placeHolder.line.remove();
+      const oldMetrics=document.querySelectorAll('.msg-metrics');
+      const lastMetric=oldMetrics[oldMetrics.length-1];
+      if(lastMetric) lastMetric.remove();
+      addLine('ai',content,{reasoning_content:reasoning});
+    }
+    updatePerf(timings?.predicted_per_second, timings?.prompt_ms?.toFixed(0), usage);
+    setStatusTxt('就绪 · '+(_4B_MODEL||'4B'));
+    updateContextMeter();
+    // 发送成功后清除图片，且将history中的图片消息替换为文字占位（防base64撑爆上下文）
+    if(hasImage){
+      clearImage();
+      // 将最后一条user消息从content数组替换为纯文本
+      for(let i=history.length-1;i>=0;i--){
+        const m=history[i];
+        if(m.role==='user' && Array.isArray(m.content)){
+          const txt=m.content.find(p=>p.type==='text')?.text||'';
+          const imgName=m.content.find(p=>p.type==='image_url')?.image_url?.url?.split(',')[0]?.substring(0,50)||'';
+          history[i]={role:'user', content: (txt||'')+' [图片]'};
+          break;
+        }
+      }
+    }
+  } catch(e){
+    updLastLine('❌ '+e.message);
+    setStatusTxt('失败');
+  }
+  sending=false;
+  btn.disabled=false;
+  btn.textContent='发送';
+  $('msgInput').focus();
+}
+
+function clearChat(){
+  history=[];
+  clearImage();
+  $('chatArea').innerHTML='<div class="empty-state"><h2>$ 进入 4B 终端</h2><p>已清空，开始新对话</p></div>';
+  updateContextMeter();
+}
+
+// ─── 事件绑定 ───
+$('msgInput').addEventListener('input',function(){
+  this.style.height='36px';
+  this.style.height=Math.min(this.scrollHeight,120)+'px';
+});
+$('modelSelect').addEventListener('change',checkStatus);
+$('sysPrompt').addEventListener('input',updateContextMeter);
+
+// ─── 启动 ───
+let _4B_MODEL='';
+loadSysPrompt();
+loadAllParams();
+loadModels();
+setInterval(checkStatus,30000);
+setInterval(pollMetrics,15000);
+pollMetrics();
+</script>
+</body>
+</html>

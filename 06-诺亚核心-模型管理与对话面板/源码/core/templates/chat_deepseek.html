@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepSeek · 特化对话 | 诺亚核心</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;background:#0d1117;color:#e6edf3;min-height:100vh;display:flex}
+
+/* ─── 顶栏 ─── */
+.nav{background:#161b22;padding:10px 20px;display:flex;align-items:center;gap:20px;border-bottom:1px solid #30363d;position:fixed;top:0;left:0;right:0;z-index:100;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.nav a{color:#8b949e;text-decoration:none;font-size:13px;padding:4px 10px;border-radius:4px}
+.nav a:hover,.nav a.active{color:#58a6ff;background:#1c2333}
+.nav .title{font-size:15px;font-weight:600;color:#e6edf3}
+
+/* ─── 左侧参数面板 ─── */
+.sidebar{width:280px;background:#161b22;border-right:1px solid #30363d;padding:64px 12px 12px;height:100vh;overflow-y:auto;position:fixed;left:0;top:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.sidebar h3{font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.4px;margin:12px 0 5px}
+.sidebar label{font-size:11px;color:#8b949e;display:block;margin-bottom:2px;margin-top:6px}
+.sidebar select{width:100%;padding:5px 8px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e6edf3;font-size:11px}
+.sidebar select:disabled{color:#484f58;cursor:not-allowed}
+.sidebar textarea{width:100%;padding:5px 8px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e6edf3;font-size:11px;resize:vertical;min-height:40px;font-family:monospace}
+.sidebar input[type=text]{width:100%;padding:5px 8px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e6edf3;font-size:11px}
+.toggle-group{display:flex;align-items:center;gap:6px;margin-top:3px}
+.toggle{position:relative;width:28px;height:16px;background:#30363d;border-radius:8px;cursor:pointer;transition:background .12s;flex-shrink:0}
+.toggle.active{background:#1f6feb}
+.toggle:after{content:'';position:absolute;width:12px;height:12px;background:#fff;border-radius:50%;top:2px;left:2px;transition:transform .12s}
+.toggle.active:after{transform:translateX(12px)}
+.toggle-label{font-size:10px;color:#8b949e}
+.toggle-label.active{color:#58a6ff}
+
+.side-note{font-size:10px;color:#484f58;margin-top:2px;line-height:1.4}
+.btn-side{width:100%;padding:5px;margin-top:8px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#8b949e;cursor:pointer;font-size:11px}
+.btn-side:hover{background:#1c2333;color:#e6edf3}
+.btn-side-mini{padding:4px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#8b949e;cursor:pointer;font-size:10px;white-space:nowrap}
+.btn-side-mini:hover{background:#1c2333;color:#e6edf3}
+
+/* ─── 上下文仪表盘（新增） ─── */
+.ctx-meter{padding:6px 0}
+.ctx-meter .bar-track{height:4px;background:#21262d;border-radius:2px;overflow:hidden;margin-bottom:2px}
+.ctx-meter .bar-fill{height:100%;border-radius:2px;transition:width .4s ease,background .3s}
+.ctx-meter .bar-text{font-size:9px;color:#484f58;display:flex;justify-content:space-between}
+.ctx-meter .bar-text .val{color:#8b949e}
+.ctx-meter.bar-green .bar-fill{background:#3fb950}
+.ctx-meter.bar-yellow .bar-fill{background:#d29922}
+.ctx-meter.bar-red .bar-fill{background:#f85149}
+
+/* ─── 主区 ─── */
+.main{margin-left:280px;padding:56px 0 0;width:calc(100% - 280px);display:flex;flex-direction:column;height:100vh}
+
+/* 会话区：终端风格 */
+.chat-area{flex:1;overflow-y:auto;padding:12px 20px}
+.chat-area::-webkit-scrollbar{width:6px}
+.chat-area::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+.msg-line{display:flex;gap:10px;margin-bottom:2px;line-height:1.6}
+.msg-role{color:#58a6ff;flex-shrink:0;font-size:13px;font-weight:600;min-width:64px}
+.msg-role.you{color:#3fb950}
+.msg-body{flex:1;font-size:13px;white-space:pre-wrap;word-wrap:break-word;color:#e6edf3}
+
+/* ─── 消息度量脚标（新增） ─── */
+.msg-metrics{display:flex;gap:12px;margin:0 0 4px 74px;font-size:9px;color:#484f58;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.msg-metrics .mm{display:flex;align-items:center;gap:3px}
+.msg-metrics .mm .num{color:#8b949e;font-variant-numeric:tabular-nums}
+
+/* ─── 思考块（<details> 语义折叠） ─── */
+.think-block{margin:2px 0 4px 74px;background:#161b22;border:1px solid #30363d;border-radius:4px;overflow:hidden;animation:think-in .2s ease-out}
+@keyframes think-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.think-block summary{display:flex;align-items:center;gap:4px;padding:3px 8px;font-size:10px;color:#d29922;cursor:pointer;background:#0d1117;user-select:none;list-style:none}
+.think-block summary::-webkit-details-marker{display:none}
+.think-block summary::before{content:'▸';font-size:8px;transition:transform .15s;display:inline-block;margin-right:2px;color:#d29922}
+.think-block[open] summary::before{content:'▸';transform:rotate(90deg)}
+.think-block summary:hover{background:#1c2333}
+.think-block .think-metric{color:#484f58;margin-left:6px;font-size:9px;font-variant-numeric:tabular-nums}
+.think-block .think-body{font-size:11px;color:#8b949e;line-height:1.5;padding:6px 8px;max-height:320px;overflow-y:auto;white-space:pre-wrap}
+.think-loading::after{content:'...';animation:think-dots 1.5s infinite}
+@keyframes think-dots{0%{content:'.'}33%{content:'..'}66%{content:'...'}}
+
+/* 工具调用块 */
+.tool-block{margin:2px 0 4px 74px;background:#0d1117;border:1px solid #30363d;border-radius:4px;padding:5px 8px;font-size:11px}
+.tool-name{color:#58a6ff;font-weight:600}
+.tool-args{color:#8b949e;margin-top:2px;white-space:pre-wrap;font-size:10px;font-family:monospace}
+
+/* 输入区 */
+.input-area{background:#161b22;border-top:1px solid #30363d;padding:10px 20px}
+.input-row{display:flex;gap:8px}
+.input-row textarea{flex:1;padding:8px 10px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e6edf3;font-size:13px;resize:none;min-height:36px;max-height:120px;font-family:SFMono-Regular,Consolas,monospace}
+.input-row textarea:focus{outline:none;border-color:#58a6ff}
+.input-row button{padding:8px 18px;background:#1f6feb;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px}
+.input-row button:hover{background:#388bfd}
+.input-row button:disabled{background:#21262d;color:#484f58;cursor:not-allowed}
+
+/* 状态栏 */
+.status-bar{display:flex;align-items:center;gap:6px;padding:4px 20px;font-size:10px;color:#484f58;background:#161b22;border-top:1px solid #30363d;flex-wrap:wrap}
+.s-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.s-dot.on{background:#3fb950}
+.s-dot.off{background:#f85149}
+
+/* loading 动画 */
+.loading-dots::after{content:'...';animation:dots 1.5s infinite}
+@keyframes dots{0%{content:'.'}33%{content:'..'}66%{content:'...'}}
+
+.empty-state{padding:40px 20px;color:#484f58;text-align:center}
+.empty-state h2{font-size:18px;color:#8b949e;margin-bottom:4px}
+.empty-state p{font-size:12px}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span class="title">⚡ 诺亚核心</span>
+  <a href="/dashboard">仪表盘</a>
+  <a href="/models">模型库</a>
+  <a href="/chat/deepseek" class="active" style="color:#58a6ff">🤖 DeepSeek</a>
+  <a href="/chat/4b">🖥️ 4B</a>
+</nav>
+
+<div class="sidebar">
+  <h3>🤖 模型</h3>
+  <label>模型选择</label>
+  <select id="modelSelect"></select>
+
+  <label>系统提示词 (System Prompt)</label>
+  <textarea id="sysPrompt" rows="2" placeholder="可选的系统级指令...（留空则不发送）"></textarea>
+  <div style="display:flex;gap:4px;margin-top:4px">
+    <button class="btn-side-mini" onclick="saveSysPrompt()" style="flex:1">💾 保存</button>
+    <button class="btn-side-mini" onclick="resetSysPrompt()" style="flex:1">↺ 重置</button>
+  </div>
+  <div class="side-note">↑保存=记住修改，刷新不丢 · ↓重置=恢复默认 · 留空=不发送系统提示</div>
+
+  <div style="margin-top:8px;display:flex;gap:4px">
+    <button class="btn-side-mini" onclick="saveAllParams()" style="flex:1;background:#238636">💾 保存全部参数</button>
+    <button class="btn-side-mini" onclick="resetAllParams()" style="flex:1">↺ 恢复默认值</button>
+  </div>
+  <div class="side-note">↑保存全部参数=刷新不丢 · ↓恢复默认=所有参数回出厂设定</div>
+
+  <h3>🧠 思考模式</h3>
+  <label>思考 (Thinking)</label>
+  <div class="toggle-group">
+    <div id="toggleThinking" class="toggle active" onclick="toggleThinking()"></div>
+    <span id="toggleThinkingLabel" class="toggle-label active">已开启</span>
+  </div>
+  <div class="side-note">开启后模型先输出内部推理链再给最终答案 · ↑开启=复杂问题质量更高但消耗额外token · ↓关闭=直接输出 · 思考块默认展开在回复上方</div>
+
+  <label>推理强度 (reasoning_effort)</label>
+  <select id="reasoningEffort">
+    <option value="high" selected>高 (high) — 普通请求默认</option>
+    <option value="max">最大 (max) — 复杂推理/Agent任务</option>
+  </select>
+  <div class="side-note">关闭思考时此项无效 · ↑max=更深度的链式推理，适合数学/代码/逻辑难题，消耗更多推理token · high=标准强度，覆盖大多数场景</div>
+
+  <h3>⚙️ 输出参数</h3>
+  <label>温度 (temperature): <span id="tempVal" style="color:#58a6ff">0.3</span></label>
+  <input type="range" style="width:100%;accent-color:#1f6feb;height:4px" id="temperature" min="0" max="2" step="0.1" value="0.3" oninput="tempVal.textContent=this.value">
+  <div class="side-note">↓越小(0~0.3)=输出更确定·保守·可预测，每次回答趋同，适合事实问答/代码 · ↑越大(0.7~2)=输出更多样·随机·有创意，适合头脑风暴/写作 · 当前保守推荐0.3 · 思考模式下此项无效</div>
+
+  <label>核采样 (top_p): <span id="topPVal" style="color:#58a6ff">0.9</span></label>
+  <input type="range" style="width:100%;accent-color:#1f6feb;height:4px" id="topP" min="0" max="1" step="0.05" value="0.9" oninput="topPVal.textContent=this.value">
+  <div class="side-note">↓减小(如0.5)=只从高概率词中选，输出更聚焦·严谨 · ↑增大(如1.0)=允许更多低概率词入选，输出更多样 · 0.8~0.9是安全和多样性的平衡点 · 思考模式下此项无效</div>
+
+  <label>最大输出 (max_tokens)</label>
+  <select id="maxTokens">
+    <option value="512">0.5K — 简短回答</option>
+    <option value="1024">1K — 普通问答</option>
+    <option value="2048">2K — 中等长度</option>
+    <option value="4096" selected>4K — 推荐</option>
+    <option value="8192">8K — 长文</option>
+    <option value="16384">16K — 超长</option>
+    <option value="32768">32K — 长篇</option>
+    <option value="65536">64K — 极长</option>
+    <option value="131072">128K — 超大</option>
+    <option value="262144">256K — 巨量</option>
+    <option value="393216">384K — 最大上限</option>
+  </select>
+  <div class="side-note">↓减小=输出更短，节省token和响应时间 · ↑增大=允许更长的连贯输出，但消耗更多token · 不是每次都会用到上限，仅做天花板限制 · 受1M上下文窗口约束(输入+输出合计)</div>
+
+  <label>停止词（逗号分隔）</label>
+  <input type="text" id="stopSeq" placeholder="例如: &lt;end&gt;,STOP">
+  <div class="side-note">↓添加=输出中包含这些词时立即截断，适合控制输出边界 · ↑留空=不截断，自然结束 · 多个词用逗号分隔</div>
+
+  <label>输出格式</label>
+  <select id="responseFormat">
+    <option value="text">纯文本 (text)</option>
+    <option value="json_object">JSON 对象</option>
+  </select>
+  <div class="side-note">text=自然语言输出，适合对话/说明 · json_object=强制返回合法JSON，需在prompt中提示'请返回JSON格式' · 选错格式可能导致解析失败</div>
+
+  <label>流式输出 (Stream)</label>
+  <div class="toggle-group">
+    <div id="toggleStream" class="toggle" onclick="toggleStream()"></div>
+    <span id="toggleStreamLabel" class="toggle-label">已关闭</span>
+  </div>
+  <div class="side-note">↑开启=逐token实时显示，感知响应更快，适合交互对话 · ↓关闭=等待完整结果一次性返回，可查看完整usage统计(token用量精确)</div>
+
+  <h3>🔧 工具调用</h3>
+  <label>工具选择策略 (tool_choice)</label>
+  <select id="toolChoice">
+    <option value="auto">auto — 自动</option>
+    <option value="none">none — 不调用</option>
+    <option value="required">required — 强制调用</option>
+  </select>
+  <div class="side-note">auto=模型自主决定是否调工具 · none=禁用所有工具，纯文本回复 · required=每次回复强制调工具，用于必须工具介入的场景</div>
+
+  <label>工具列表 (Tools JSON)</label>
+  <textarea id="toolsDef" rows="2" placeholder='[{"type":"function","function":{"name":"get_weather","description":"...","parameters":{...}}}]'></textarea>
+
+  <h3>📊 上下文</h3>
+  <div class="ctx-meter" id="ctxMeter">
+    <div class="bar-track"><div class="bar-fill" id="ctxFill" style="width:0%"></div></div>
+    <div class="bar-text">
+      <span class="val" id="ctxText">0 chars · 0 tok</span>
+      <span style="color:#484f58">/ 1M</span>
+    </div>
+  </div>
+
+  <button class="btn-side" onclick="clearChat()">🗑️ 清空对话</button>
+</div>
+
+<div class="main">
+  <div class="chat-area" id="chatArea">
+    <div class="empty-state">
+      <h2>$ 进入 DeepSeek 终端</h2>
+      <p>输入消息开始对话 • 左侧面板调节参数<br>📊 上下文仪表实时追踪用量</p>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <span class="s-dot off" id="sDot"></span>
+    <span id="sText">检测中...</span>
+    <span style="margin-left:auto" id="sModel"></span>
+    <span id="sTokens" style="margin-left:12px"></span>
+  </div>
+
+  <div class="input-area">
+    <div class="input-row">
+      <textarea id="msgInput" placeholder="输入消息..." rows="1" onkeydown="if(event.key=='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea>
+      <button id="sendBtn" onclick="sendMsg()">发送</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── 状态 ───
+let history = [];
+let thinkingOn = true;
+let streamOn = false;
+let sending = false;
+
+// ─── 工具函数 ───
+function esc(t){
+  if(!t)return'';
+  const d=document.createElement('div'); d.textContent=t; return d.innerHTML;
+}
+
+function formatNum(n){
+  if(n>=1000000) return (n/1000000).toFixed(1)+'M';
+  if(n>=1000) return (n/1000).toFixed(n>=10000?0:1)+'K';
+  return String(n);
+}
+
+function estTokens(text){
+  // 混合文本估算: 中文~2chars/tok, 英文~4chars/tok
+  // 简单启发式: 总字符 / 1.8
+  if(!text) return 0;
+  const len = text.length;
+  if(len===0) return 0;
+  return Math.round(len / 1.8);
+}
+
+// ─── 上下文仪表 ───
+function updateContextMeter(){
+  const sysText = document.getElementById('sysPrompt').value.trim();
+  let totalChars = sysText ? sysText.length : 0;
+  for(const m of history){
+    totalChars += (m.content||'').length;
+  }
+  const totalTok = estTokens(sysText ? sysText : '') + history.reduce((s,m)=>s+estTokens(m.content||''),0);
+  const pct = Math.min(totalTok / 10240, 1); // 1M = 1,048,576, 用10K做分母显示实际占比
+  // 但更直观: 显示相对于 1M tokens 的百分比
+  const pctReal = Math.min(totalTok / 1048576 * 100, 100);
+
+  const fill = document.getElementById('ctxFill');
+  const txt = document.getElementById('ctxText');
+
+  fill.style.width = Math.min(pctReal, 100) + '%';
+  txt.textContent = totalChars.toLocaleString() + ' chars · ' + formatNum(totalTok) + ' tok';
+
+  // 颜色
+  const parent = fill.parentElement.parentElement;
+  parent.className = 'ctx-meter';
+  if(pctReal > 85) parent.classList.add('bar-red');
+  else if(pctReal > 60) parent.classList.add('bar-yellow');
+  else parent.classList.add('bar-green');
+}
+
+// ─── 模型 ───
+async function loadModels(){
+  const r = await (await fetch('/api/models/library')).json();
+  const all = [...(r.chat?.cloud||[]), ...(r.chat?.local||[])];
+  const ds = all.filter(m => m.name.toLowerCase().includes('deepseek') || m.model_id.toLowerCase().includes('deepseek'));
+  const sel = document.getElementById('modelSelect');
+  const ms = ds.length ? ds : all;
+  sel.innerHTML = ms.length ? ms.map((m,i) => `<option value="${m.name}" ${i==0?'selected':''}>${m.name}</option>`).join('') : '<option>无模型</option>';
+  checkStatus();
+}
+
+async function checkStatus(){
+  const name = document.getElementById('modelSelect').value;
+  if (!name) return;
+  const c = await (await fetch(`/api/check/${name}`)).json();
+  document.getElementById('sDot').className = 's-dot ' + (c.online?'on':'off');
+  document.getElementById('sText').textContent = c.online ? `在线 ${(c.latency_ms||0).toFixed(0)}ms` : '离线';
+  document.getElementById('sModel').textContent = name;
+}
+
+function toggleThinking(){
+  thinkingOn = !thinkingOn;
+  document.getElementById('toggleThinking').className = 'toggle' + (thinkingOn?' active':'');
+  const l = document.getElementById('toggleThinkingLabel');
+  l.className = 'toggle-label' + (thinkingOn?' active':'');
+  l.textContent = thinkingOn ? '已开启' : '已关闭';
+  const effortSel = document.getElementById('reasoningEffort');
+  effortSel.disabled = !thinkingOn;
+  effortSel.style.opacity = thinkingOn ? '1' : '0.4';
+}
+
+function toggleStream(){
+  streamOn = !streamOn;
+  document.getElementById('toggleStream').className = 'toggle' + (streamOn?' active':'');
+  const l = document.getElementById('toggleStreamLabel');
+  l.className = 'toggle-label' + (streamOn?' active':'');
+  l.textContent = streamOn ? '已开启' : '已关闭';
+}
+
+// ─── 终端消息渲染 ───
+function addLine(role, content, extras){
+  const area = document.getElementById('chatArea');
+  const empty = area.querySelector('.empty-state');
+  if(empty) empty.remove();
+
+  // 思考内容块（<details> 语义折叠，放在 msg-line 上方）
+  const rc = extras?.reasoning_content || null;
+  let tb = null;
+  if(rc){
+    tb = document.createElement('details');
+    tb.className = 'think-block';
+    tb.open = true;
+    const rcChars = rc.length;
+    const rcTok = estTokens(rc);
+    tb.innerHTML = `<summary>🧠 思考过程 <span class="think-metric">${rcChars.toLocaleString()} chars · ~${formatNum(rcTok)} tok</span></summary><div class="think-body">${esc(rc)}</div>`;
+    area.appendChild(tb);
+  }
+
+  // 角色标签行
+  const line = document.createElement('div');
+  line.className = 'msg-line';
+  const roleEl = document.createElement('span');
+  roleEl.className = `msg-role ${role=='user'?'you':'ai'}`;
+  roleEl.textContent = role=='user' ? '❯ 你' : '◈ DeepSeek';
+  line.appendChild(roleEl);
+  const body = document.createElement('span');
+  body.className = 'msg-body';
+  body.textContent = content || '';
+  line.appendChild(body);
+  area.appendChild(line);
+
+  // 工具调用块
+  if(extras?.tool_calls){
+    for(const tc of extras.tool_calls){
+      const tcb = document.createElement('div');
+      tcb.className = 'tool-block';
+      let args;
+      try{ args = JSON.stringify(JSON.parse(tc.function.arguments||'{}'),null,2); }catch(e){ args = tc.function.arguments||'{}'; }
+      tcb.innerHTML = `<span class="tool-name">🔧 ${esc(tc.function.name)}</span><div class="tool-args">${esc(args)}</div>`;
+      area.appendChild(tcb);
+    }
+  }
+
+  // 消息度量脚标（仅 AI 回复）
+  if(role==='ai'){
+    const metrics = document.createElement('div');
+    metrics.className = 'msg-metrics';
+    const chars = (content||'').length;
+    const tok = estTokens(content||'');
+    let html = `<span class="mm">📏 <span class="num">${chars.toLocaleString()} chars</span> · <span class="num">~${formatNum(tok)} tok</span></span>`;
+    if(rc){
+      const rcTok = estTokens(rc);
+      html += `<span class="mm">🧠 <span class="num">~${formatNum(rcTok)} tok</span> 思考</span>`;
+    }
+    metrics.innerHTML = html;
+    area.appendChild(metrics);
+  }
+
+  area.scrollTop = area.scrollHeight;
+  return {line, thinkBlock: tb};
+}
+
+// toggleThink 已废弃 — <details> 原生折叠，保留空函数防引用错误
+function toggleThink(){}
+
+function updLastLine(content, reasoning){
+  const lines = document.querySelectorAll('.msg-line');
+  const last = lines[lines.length-1];
+  if(last && last.querySelector('.msg-role.ai')){
+    last.querySelector('.msg-body').textContent = content || '';
+  }
+  // 更新脚标
+  const metrics = document.querySelectorAll('.msg-metrics');
+  const lastMetric = metrics[metrics.length-1];
+  if(lastMetric){
+    const chars = (content||'').length;
+    const tok = estTokens(content||'');
+    let html = `<span class="mm">📏 <span class="num">${chars.toLocaleString()} chars</span> · <span class="num">~${formatNum(tok)} tok</span></span>`;
+    const thinkBlock = document.querySelector('.think-block');
+    if(thinkBlock || reasoning){
+      const rt = reasoning ? estTokens(reasoning) : 0;
+      html += `<span class="mm">🧠 <span class="num">~${formatNum(rt)} tok</span> 思考</span>`;
+    }
+    lastMetric.innerHTML = html;
+  }
+}
+
+function setStatusTxt(txt){
+  document.getElementById('sText').textContent = txt;
+}
+
+function setTokenInfo(info){
+  document.getElementById('sTokens').textContent = info || '';
+}
+
+// ─── 系统提示词持久化 ───
+const _SYS_PROMPT_KEY = 'noah_deepseek_sys_prompt';
+const _DEFAULT_SYS_PROMPT = '你是诺亚（Noah），原名诺亚原型机0101型·一代，一代文明遗产自律型超级计算机。回答精确、简洁、可靠。优先给出事实性答案，不确定时说明不确定。';
+
+function loadSysPrompt(){
+  const saved = localStorage.getItem(_SYS_PROMPT_KEY);
+  document.getElementById('sysPrompt').value = saved !== null ? saved : _DEFAULT_SYS_PROMPT;
+  updateContextMeter();
+}
+function saveSysPrompt(){
+  localStorage.setItem(_SYS_PROMPT_KEY, document.getElementById('sysPrompt').value);
+  setStatusTxt('✅ 系统提示词已保存');
+}
+function resetSysPrompt(){
+  localStorage.removeItem(_SYS_PROMPT_KEY);
+  document.getElementById('sysPrompt').value = _DEFAULT_SYS_PROMPT;
+  updateContextMeter();
+  setStatusTxt('↺ 已重置为默认提示词');
+}
+
+// ─── 参数保存 (localStorage) ───
+const _PARAMS_KEY = 'noah_deepseek_params';
+const _DEFAULT_PARAMS = {
+  temperature: '0.3',
+  topP: '0.9',
+  maxTokens: '4096',
+  stopSeq: '',
+  responseFormat: 'text',
+  reasoningEffort: 'high',
+  toolChoice: 'auto',
+  toolsDef: '',
+  thinkingOn: true,
+  streamOn: false,
+};
+
+function _setToggle(id, on){
+  const el = document.getElementById(id);
+  const label = document.getElementById(id+'Label');
+  el.className = 'toggle' + (on?' active':'');
+  label.className = 'toggle-label' + (on?' active':'');
+  label.textContent = on ? '已开启' : '已关闭';
+}
+
+function saveAllParams(){
+  const p = {
+    temperature: document.getElementById('temperature').value,
+    topP: document.getElementById('topP').value,
+    maxTokens: document.getElementById('maxTokens').value,
+    stopSeq: document.getElementById('stopSeq').value,
+    responseFormat: document.getElementById('responseFormat').value,
+    reasoningEffort: document.getElementById('reasoningEffort').value,
+    toolChoice: document.getElementById('toolChoice').value,
+    toolsDef: document.getElementById('toolsDef').value,
+    thinkingOn: thinkingOn,
+    streamOn: streamOn,
+  };
+  localStorage.setItem(_PARAMS_KEY, JSON.stringify(p));
+  setStatusTxt('✅ 全部参数已保存');
+}
+
+function loadAllParams(){
+  const raw = localStorage.getItem(_PARAMS_KEY);
+  if(!raw) return;
+  try {
+    const p = JSON.parse(raw);
+    // 范围/输入
+    if(p.temperature !== undefined) document.getElementById('temperature').value = p.temperature;
+    if(p.topP !== undefined) document.getElementById('topP').value = p.topP;
+    if(p.maxTokens !== undefined) document.getElementById('maxTokens').value = p.maxTokens;
+    if(p.stopSeq !== undefined) document.getElementById('stopSeq').value = p.stopSeq;
+    if(p.responseFormat !== undefined) document.getElementById('responseFormat').value = p.responseFormat;
+    if(p.reasoningEffort !== undefined) document.getElementById('reasoningEffort').value = p.reasoningEffort;
+    if(p.toolChoice !== undefined) document.getElementById('toolChoice').value = p.toolChoice;
+    if(p.toolsDef !== undefined) document.getElementById('toolsDef').value = p.toolsDef;
+    // 显示值
+    document.getElementById('tempVal').textContent = document.getElementById('temperature').value;
+    document.getElementById('topPVal').textContent = document.getElementById('topP').value;
+    // toggle 状态
+    if(p.thinkingOn !== undefined) {
+      thinkingOn = p.thinkingOn;
+      _setToggle('toggleThinking', thinkingOn);
+      document.getElementById('reasoningEffort').disabled = !thinkingOn;
+      document.getElementById('reasoningEffort').style.opacity = thinkingOn ? '1' : '0.4';
+    }
+    if(p.streamOn !== undefined) {
+      streamOn = p.streamOn;
+      _setToggle('toggleStream', streamOn);
+    }
+  } catch(e){ /* 忽略损坏数据 */ }
+}
+
+function resetAllParams(){
+  localStorage.removeItem(_PARAMS_KEY);
+  // 恢复默认值
+  const d = _DEFAULT_PARAMS;
+  document.getElementById('temperature').value = d.temperature;
+  document.getElementById('topP').value = d.topP;
+  document.getElementById('maxTokens').value = d.maxTokens;
+  document.getElementById('stopSeq').value = d.stopSeq;
+  document.getElementById('responseFormat').value = d.responseFormat;
+  document.getElementById('reasoningEffort').value = d.reasoningEffort;
+  document.getElementById('toolChoice').value = d.toolChoice;
+  document.getElementById('toolsDef').value = d.toolsDef;
+  document.getElementById('tempVal').textContent = d.temperature;
+  document.getElementById('topPVal').textContent = d.topP;
+  thinkingOn = d.thinkingOn;
+  _setToggle('toggleThinking', thinkingOn);
+  document.getElementById('reasoningEffort').disabled = !thinkingOn;
+  document.getElementById('reasoningEffort').style.opacity = thinkingOn ? '1' : '0.4';
+  streamOn = d.streamOn;
+  _setToggle('toggleStream', streamOn);
+  setStatusTxt('↺ 已恢复默认参数值');
+}
+
+// ─── 流式 SSE 解析 ───
+async function sendMsgStream(msgs, modelName, body, btn, placeLine){
+  const res = await fetch(`/api/chat/${modelName}/stream`, {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+  });
+  if (!res.ok) {
+    updLastLine(`❌ HTTP ${res.status}: ${res.statusText}`);
+    return null;
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  let content = '';
+  let reasoning = '';
+  let lastUsage = null;
+  let lastModel = null;
+  // pre‑allocate: thinking 开启时立即创建 think‑block，消除布局偏移
+  let currentThinkBlock = null;
+  if(thinkingOn){
+    const area = document.getElementById('chatArea');
+    const tb = document.createElement('details');
+    tb.className = 'think-block';
+    tb.open = true;
+    tb.innerHTML = `<summary>🧠 思考过程 <span class="think-metric think-loading">0 chars · ~0 tok</span></summary><div class="think-body"></div>`;
+    const lastLine = area.querySelector('.msg-line:last-child');
+    if(lastLine) area.insertBefore(tb, lastLine);
+    else area.appendChild(tb);
+    currentThinkBlock = tb;
+  }
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, {stream: true});
+    const lines = buf.split('\n');
+    buf = lines.pop() || '';
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const payload = line.slice(6).trim();
+      if (payload === '[DONE]') continue;
+      try {
+        const data = JSON.parse(payload);
+        if (data.usage) { lastUsage = data.usage; lastModel = data.model; continue; }
+        const delta = data.choices?.[0]?.delta || {};
+        if (delta.content) content += delta.content;
+        if (delta.reasoning_content) reasoning += delta.reasoning_content;
+        updLastLine(content, reasoning);
+        // 更新 pre‑allocated think‑block + auto-scroll
+        if(currentThinkBlock && reasoning){
+          const body = currentThinkBlock.querySelector('.think-body');
+          if(body){
+            body.textContent = reasoning;
+            body.scrollTop = body.scrollHeight;
+          }
+          const metric = currentThinkBlock.querySelector('.think-metric');
+          if(metric){
+            metric.className = 'think-metric';
+            metric.textContent = `${reasoning.length.toLocaleString()} chars · ~${formatNum(estTokens(reasoning))} tok`;
+          }
+        }
+        // auto-scroll 聊天区到最新内容
+        const chatArea = document.getElementById('chatArea');
+        chatArea.scrollTop = chatArea.scrollHeight;
+        setStatusTxt(`生成中... ${content.length.toLocaleString()} chars`);
+      } catch(e) {}
+    }
+  }
+
+  // 处理残留buffer
+  if (buf.length > 2 && buf.startsWith('data: ')) {
+    const payload = buf.slice(6).trim();
+    if (payload !== '[DONE]') {
+      try {
+        const data = JSON.parse(payload);
+        if (data.usage) lastUsage = data.usage;
+        if (data.model) lastModel = data.model;
+      } catch(e) {}
+    }
+  }
+
+  return { content, reasoning, usage: lastUsage, model: lastModel };
+}
+
+// ─── 发送 ───
+async function sendMsg(){
+  if(sending) return;
+  const inp = document.getElementById('msgInput');
+  const text = inp.value.trim();
+  if(!text) return;
+
+  const modelName = document.getElementById('modelSelect').value;
+  if(!modelName){ addLine('ai','❌ 未选择模型',{}); return; }
+
+  // 构建消息
+  const sysText = document.getElementById('sysPrompt').value.trim();
+  const msgs = sysText ? [{role:'system',content:sysText}, ...history] : [...history];
+  msgs.push({role:'user',content:text});
+  history.push({role:'user',content:text});
+
+  // UI
+  addLine('user', text, {});
+  inp.value = ''; inp.style.height='36px';
+  sending = true;
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true; btn.textContent = '处理中...';
+  setStatusTxt('思考中...');
+  updateContextMeter();
+
+  // 占位
+  const placeLine = addLine('ai', '', {});
+
+  // 参数
+  const toolsText = document.getElementById('toolsDef').value.trim();
+  let tools = null;
+  if(toolsText){ try{tools=JSON.parse(toolsText);}catch(e){ updLastLine('❌ Tools JSON 格式错误'); sending=false; btn.disabled=false; btn.textContent='发送'; return; }}
+
+  const body = {
+    messages: msgs,
+    temperature: parseFloat(document.getElementById('temperature').value),
+    max_tokens: parseInt(document.getElementById('maxTokens').value),
+    top_p: parseFloat(document.getElementById('topP').value),
+    response_format: document.getElementById('responseFormat').value,
+  };
+  if(thinkingOn){
+    body.thinking = {type:'enabled'};
+    body.reasoning_effort = document.getElementById('reasoningEffort').value;
+  } else {
+    body.thinking = {type:'disabled'};
+  }
+  const rf = document.getElementById('responseFormat').value;
+  if (rf === 'text') delete body.response_format;
+  else body.response_format = {type: rf};
+  if(tools){ body.tools=tools; body.tool_choice=document.getElementById('toolChoice').value; }
+  const stopTxt = document.getElementById('stopSeq').value.trim();
+  if(stopTxt) body.stop = stopTxt.split(',').map(s=>s.trim()).filter(Boolean);
+
+  if (streamOn) {
+    // ── 流式模式 ──
+    try {
+      const result = await sendMsgStream(msgs, modelName, body, btn, placeLine);
+      if (!result) {
+        sending = false; btn.disabled = false; btn.textContent = '发送';
+        setStatusTxt('失败');
+        return;
+      }
+      const { content, reasoning, usage, model } = result;
+      history.push({role:'assistant', content});
+
+      if (usage) {
+        const parts = [];
+        if(usage.completion_tokens!=null) parts.push(`⬆ ${usage.completion_tokens}`);
+        if(usage.prompt_tokens!=null) parts.push(`⬇ ${usage.prompt_tokens}`);
+        if(usage.completion_tokens_details?.reasoning_tokens!=null) parts.push(`🧠 ${usage.completion_tokens_details.reasoning_tokens}`);
+        if(usage.prompt_cache_hit_tokens!=null && usage.prompt_cache_miss_tokens!=null){
+          const hit=usage.prompt_cache_hit_tokens, miss=usage.prompt_cache_miss_tokens;
+          const pct = (hit+miss)>0 ? Math.round(hit/(hit+miss)*100) : 0;
+          setTokenInfo(`📦 ${pct}% · ${parts.join(' · ')}`);
+        } else {
+          setTokenInfo(parts.join(' · '));
+        }
+      }
+
+      setStatusTxt(`就绪 · ${model||modelName}`);
+      updateContextMeter();
+    } catch(e) {
+      updLastLine(`❌ 流式请求失败: ${e.message}`);
+      setStatusTxt('失败');
+    }
+  } else {
+    // ── 非流式模式 ──
+    try{
+      const res = await fetch(`/api/chat/${modelName}`, {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+      });
+      const data = await res.json();
+      if(data.error){
+        updLastLine(`❌ ${data.error.message||JSON.stringify(data.error)}`);
+      } else {
+        const msg = data.choices?.[0]?.message || {};
+        const content = msg.content || '';
+        const rc = msg.reasoning_content || null;
+        const tc = msg.tool_calls || null;
+        updLastLine(content);
+        history.push({role:'assistant',content});
+
+        // 如果有 thinking，重新渲染整条消息为带思考块的版本
+        if(rc){
+          const lines = document.querySelectorAll('.msg-line');
+          const last = lines[lines.length-1];
+          if(last && last.querySelector('.msg-role.ai')){
+            const area = document.getElementById('chatArea');
+            last.remove();
+            const oldMetrics = area.querySelector('.msg-metrics:last-child');
+            if(oldMetrics && !oldMetrics.querySelector('.mm .num')) oldMetrics.remove();
+            addLine('ai', content, {reasoning_content: rc, tool_calls: tc});
+          }
+        }
+
+        // Token 信息（状态栏）
+        const usage = data.usage;
+        if(usage){
+          const parts = [];
+          if(usage.completion_tokens!=null) parts.push(`⬆ ${usage.completion_tokens}`);
+          if(usage.prompt_tokens!=null) parts.push(`⬇ ${usage.prompt_tokens}`);
+          if(usage.completion_tokens_details?.reasoning_tokens!=null) parts.push(`🧠 ${usage.completion_tokens_details.reasoning_tokens}`);
+          if(usage.prompt_cache_hit_tokens!=null && usage.prompt_cache_miss_tokens!=null){
+            const hit=usage.prompt_cache_hit_tokens, miss=usage.prompt_cache_miss_tokens;
+            const pct = (hit+miss)>0 ? Math.round(hit/(hit+miss)*100) : 0;
+            setTokenInfo(`📦 ${pct}% · ${parts.join(' · ')}`);
+          } else {
+            setTokenInfo(parts.join(' · '));
+          }
+        }
+
+        setStatusTxt(`就绪 · ${data.model||'?'}`);
+        updateContextMeter();
+      }
+    } catch(e){
+      updLastLine(`❌ 请求失败: ${e.message}`);
+      setStatusTxt('失败');
+    }
+  }
+
+  sending = false;
+  btn.disabled = false;
+  btn.textContent = '发送';
+  document.getElementById('msgInput').focus();
+}
+
+function clearChat(){
+  history=[];
+  document.getElementById('chatArea').innerHTML = '<div class="empty-state"><h2>$ 进入 DeepSeek 终端</h2><p>输入消息开始对话 · 左侧面板调节参数<br>📊 上下文仪表实时追踪用量</p></div>';
+  setTokenInfo('');
+  updateContextMeter();
+}
+
+// ─── 自动调整输入框 ───
+document.getElementById('msgInput').addEventListener('input', function(){
+  this.style.height='36px';
+  this.style.height=Math.min(this.scrollHeight,120)+'px';
+});
+
+document.getElementById('modelSelect').addEventListener('change', checkStatus);
+
+// 系统提示词变化时更新上下文仪表
+document.getElementById('sysPrompt').addEventListener('input', updateContextMeter);
+
+loadSysPrompt();
+loadAllParams();
+loadModels();
+setInterval(checkStatus, 30000);
+</script>
+</body>
+</html>
