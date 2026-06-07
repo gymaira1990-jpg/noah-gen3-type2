@@ -1,5 +1,19 @@
 # 📜 记忆宫殿 · 变更日志
 
+## 2026-06-07 — 结构统一：合并开发文档，统一目录体系 📐
+
+### 🔄 变更
+- **合并文档**：从本地开发工作区(`/opt/data/workspace/记忆宫殿/`) 合并到公开仓库
+  - 新增 `架构设计/mnemosyne_v2.1_timem_architecture.md`
+  - 新增 `架构设计/外部系统调研.md`
+  - 新增 `TMT层级记忆系统/README.md`
+  - 新增 `开源版发布方案.md`、`版本分析报告.md`
+  - 新增 `MCP桥接/mnemosyne_mcp.py`、`MCP桥接/README.md`
+- **统一目录**：`方案设计/` → `架构设计/`（合并为统一命名）
+- **清理废弃**：`MCP桥接/tmt_mcp.py` 已删除（并入 Mnemosyne v2.1）
+- **新增**：`日常运维/README.md`、`README.md`（公开版项目说明）
+- **说明**：服务器配置/SSH隧道/部署脚本仅在本地工作区，不上传 GitHub
+
 ## 2026-06-04 — Phase 3 启动：矛盾检测 + Wiki 知识库 🚀
 
 ### ✨ P3-T1: 矛盾检测 (Conflict Detection) ✅
