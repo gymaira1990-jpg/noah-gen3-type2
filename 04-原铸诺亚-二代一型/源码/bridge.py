@@ -7,26 +7,28 @@ NOAH-PRIME · 原初铸造世界 ↔ 广州星语庭
 核心原则: 广州不可用时，本地照常工作。零依赖。
 
 架构:
-  NOAH-PRIME (动态IP·笔记本)  ──出站连接──→  广州 (固定IP·43.136.21.142)
+  NOAH-PRIME (动态IP·笔记本)  ──出站连接──→  远程服务器 (固定IP)
   
-  笔记本IP天天变？没关系——永远是笔记本主动连广州。
+  笔记本IP天天变？没关系——永远是笔记本主动连远程服务器。
   就像你打开微信，不管在哪儿都能收到消息。
 
-广州角色:
-  ① 夜班任务队列 — 关机前丢过去，第二天看结果
-  ② 知识备份同步 — 本地数据自动复制到云端保险柜
-  ③ 远程健康监控 — 广州帮你盯着笔记本状态
+远程服务器角色:
+  ① 异步任务队列 — 关机前丢过去，第二天看结果
+  ② 知识备份同步 — 本地数据自动复制到远程
+  ③ 远程健康监控 — 远程帮你盯着笔记本状态
 """
 
 import json
 import time
 import subprocess
+import os
 from pathlib import Path
 from datetime import datetime
 from pg_conn import cursor
 
-GZ_HOST = "ubuntu@43.136.21.142"
-SSH_KEY = str(Path.home() / ".ssh" / "guangzhou-server.pem")
+# ─── 远程服务器配置 (通过环境变量覆盖) ───
+__GZ_HOST = os.environ.get("REMOTE_HOST", "user@your-server.com")
+_SSH_KEY = os.environ.get("REMOTE_SSH_KEY", str(Path.home() / ".ssh" / "your-key.pem"))
 PRIME_ROOT = Path(__file__).parent
 
 # ═══════════════════════════════════════
@@ -56,8 +58,8 @@ class GuangzhouRelay:
     def _ssh(self, cmd: str, timeout: int = 15) -> str:
         """执行SSH命令。失败返回空字符串。"""
         try:
-            full = ["ssh", "-i", SSH_KEY, "-o", "StrictHostKeyChecking=no",
-                    "-o", "ConnectTimeout=5", GZ_HOST, cmd]
+            full = ["ssh", "-i", _SSH_KEY, "-o", "StrictHostKeyChecking=no",
+                    "-o", "ConnectTimeout=5", _GZ_HOST, cmd]
             r = subprocess.run(full, capture_output=True, text=True, timeout=timeout)
             return r.stdout.strip() if r.returncode == 0 else ""
         except Exception:
@@ -174,7 +176,7 @@ class GuangzhouRelay:
 
         return {
             "online": True,
-            "host": GZ_HOST,
+            "host": _GZ_HOST,
             "disk": disk.strip(),
             "memory": mem.strip(),
             "pending_tasks": queue_count.strip(),

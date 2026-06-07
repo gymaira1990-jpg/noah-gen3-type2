@@ -9,7 +9,7 @@ Mnemosyne MCP Server — 桥接 Hermes 与记忆宫殿
   mcp_servers:
     mnemosyne:
       command: "python3"
-      args: ["/home/g-cat/.hermes/hermes-agent/tools/mnemosyne_mcp.py"]
+      args: ["<hermes-agent-path>/tools/mnemosyne_mcp.py"]
 """
 
 import json

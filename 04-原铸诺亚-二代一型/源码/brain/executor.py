@@ -11,7 +11,7 @@
   第2级: pgvector 语义搜索 (广州+豆包嵌入) → ~50ms-2s
   第3级: 工厂层API兜底 (DeepSeek/豆包) → 1-3s
 
-广州服务器: 43.136.21.142:8000 (第一神经元v3.0)
+远程服务器: <your-server-ip>:8000 (第一神经元v3.0)
   模型: qwen2.5:1.5b-instruct-q4_K_M
   嵌入: doubao-embedding-vision-251215 (2048维)
   DB: pgvector + exact_info + memory_store
@@ -28,11 +28,10 @@ sys.path.insert(0, str(PRIME))
 
 OLLAMA_LOCAL = "http://localhost:11435"
 
-# 广州 first-neuron API
-#  主入口: HTTPS (gz.g-cat.cn/neuron/api) — Nginx代理, Let's Encrypt加密
-#  SSH隧道: localhost:8080 → 广州:8000 (隧道备用)
-#  直连 (已封锁): localhost:8000 (仅当安全组开放)
-_GZ_HTTPS_URL = "https://gz.g-cat.cn/neuron/api"
+#  主入口: HTTPS (your-domain.com/neuron/api) — 由反向代理处理
+#  SSH隧道: localhost:8080 → 远程:8000 (隧道备用)
+#  直连: localhost:8000
+_GZ_HTTPS_URL = os.environ.get("REMOTE_API_URL", "https://your-domain.com/neuron/api")
 _TUNNEL_PORTS = [8080, 8000]
 _GZ_TUNNEL_URL = None
 _GZ_CHECKED = False

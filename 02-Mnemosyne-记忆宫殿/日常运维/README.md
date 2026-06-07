@@ -3,10 +3,10 @@
 ## 一键验证
 
 ```bash
-bash /opt/data/workspace/记忆宫殿/日常运维/一键验证.sh
+bash <deploy-path>/一键验证.sh
 ```
 
-检查：systemd三剑客 · SSH隧道 · LLM · Embed · Rerank · PO · SOCKS5 · TMT · 安全网
+检查：systemd服务 · SSH隧道 · LLM推理 · Embedding · Rerank · TMT · 安全网
 
 ## 记忆写入 & 搜索
 
@@ -62,31 +62,31 @@ curl -X POST http://127.0.0.1:18010/api/v1/tmt/decay \
 
 | 症状 | 可能原因 | 解决 |
 |------|---------|------|
-| **搜索接口挂死** | asyncpg 参数索引错误 / BM25 关键词含中文 | 重启 Mnemosyne: `ssh gz sudo systemctl restart mnemosyne` |
-| **一键验证 LLM 失败** | GPU 二进制未找到 / CUDA 路径 | 检查 systemd: `sudo systemctl status mnemo-qwen-4b` |
-| **TMT L2 超时** | `-R 11435` 隧道未配，降级到 GZ CPU 模型太慢 | 检查隧道: `ssh gz 'curl -s :11435/v1/models'` |
-| **autossh 端口冲突** | 旧 SSH 进程残留 / `ExitOnForwardFailure` 导致全挂 | 关 `ExitOnForwardFailure`，pkill 后重启 |
-| **Hermes cron 报脚本未找到** | crontab script 字段被当文件路径解析 | 用 `hermes cron edit` 改为只传文件名 |
+| **搜索接口挂死** | 数据库参数索引错误 | 重启 Mnemosyne 服务 |
+| **LLM 推理失败** | GPU 二进制未找到 / CUDA 路径 | 检查 systemd 对应服务状态 |
+| **TMT L2 超时** | 远程模型访问超时 | 检查 SSH 隧道/REST API 连通性 |
+| **端口冲突** | 旧进程残留 | 清理残留进程后重启 |
+| **cron 脚本未找到** | 路径配置问题 | 检查 cron 脚本路径配置 |
 
 ## 日志
 
 ```bash
 # Mnemosyne 日志
-ssh gz "journalctl -u mnemosyne.service -n 50"
+journalctl -u mnemosyne.service -n 50
 
 # LLM 日志
-tail -50 /home/g-cat/logs/qwen-4b.log
+tail -50 <log-path>/qwen-4b.log
 
 # 隧道日志
-tail -20 /home/g-cat/logs/autossh.log
+tail -20 <log-path>/autossh.log
 
 # watchdog 日志
-tail -20 /home/g-cat/logs/watchdog.log
+tail -20 <log-path>/watchdog.log
 ```
 
 ## GZ 保底
 
-当 WSL 离线时，GZ 的 Qwen3.5-2B fallback (`:11437`) 自动接管 TMT 蒸馏任务：
+当本地推理服务离线时，远程 fallback 模型自动接管 TMT 蒸馏任务：
 
 ```bash
 ssh gz "systemctl status qwen3-fallback.service"

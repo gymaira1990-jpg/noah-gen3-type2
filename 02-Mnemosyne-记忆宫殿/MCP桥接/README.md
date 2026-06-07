@@ -6,8 +6,8 @@ Hermes Agent ↔ Mnemosyne 记忆引擎的 MCP 工具桥接。
 
 | 文件 | 路径 | 说明 |
 |------|------|------|
-| `mnemosyne_mcp.py` | `/home/g-cat/.hermes/hermes-agent/tools/mnemosyne_mcp.py` | 14 个记忆工具 |
-| `tmt_mcp.py` | `/home/g-cat/.hermes/hermes-agent/tools/tmt_mcp.py` | 5 个 TMT 工具 |
+| `mnemosyne_mcp.py` | `<hermes-agent-path>/tools/mnemosyne_mcp.py` | 14 个记忆工具 |
+| `tmt_mcp.py` | `<hermes-agent-path>/tools/tmt_mcp.py` | 5 个 TMT 工具 |
 
 ## Hermes config.yaml 配置
 
@@ -15,11 +15,11 @@ Hermes Agent ↔ Mnemosyne 记忆引擎的 MCP 工具桥接。
 mcp_servers:
   mnemosyne:
     command: "python3"
-    args: ["/home/g-cat/.hermes/hermes-agent/tools/mnemosyne_mcp.py"]
+    args: ["<hermes-agent-path>/tools/mnemosyne_mcp.py"]
   tmt:
     command: python3
     args:
-      - /home/g-cat/.hermes/hermes-agent/tools/tmt_mcp.py
+      - <hermes-agent-path>/tools/tmt_mcp.py
   prompt-optimizer:
     url: "http://127.0.0.1:3333/mcp"
     tools:

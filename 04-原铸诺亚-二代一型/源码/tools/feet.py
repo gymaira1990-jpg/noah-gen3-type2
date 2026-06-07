@@ -35,7 +35,7 @@ register("http_request", http_request, "feet", "发送HTTP请求", requires_revi
 def ssh_remote(host: str, command: str, key_path: str = None) -> dict:
     if not key_path:
         from pathlib import Path
-        key_path = str(Path.home() / ".ssh" / "guangzhou-server.pem")
+        key_path = os.environ.get("REMOTE_SSH_KEY", str(Path.home() / ".ssh" / "your-key.pem"))
     import paramiko
     try:
         ssh = paramiko.SSHClient()

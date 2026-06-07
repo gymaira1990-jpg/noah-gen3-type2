@@ -21,14 +21,14 @@ Iᵢ = 层级特定的 LLM 指令
 Φᵢ = LLM 蒸馏算子（Qwen3.5-9B, temperature=0.3）
 ```
 
-## 关键文件路径
+## 关键文件路径（部署时替换）
 
-| 组件 | 路径 |
-|------|------|
-| TMT 主模块 | `/opt/mnemosyne/tmt.py`（GZ 服务器） |
-| MCP 工具 | `/home/g-cat/.hermes/hermes-agent/tools/tmt_mcp.py` |
-| SQL 迁移 | `/tmp/tmt_migration.sql` |
-| 设计文档 | `/home/g-cat/mnemosyne_v2.1_timem_architecture.md` |
+| 组件 | 路径（参考） |
+|------|-------------|
+| TMT 主模块 | `<deploy-path>/tmt.py` |
+| MCP 工具 | `<hermes-agent-path>/tools/tmt_mcp.py` |
+| SQL 迁移 | `<deploy-path>/tmt_migration.sql` |
+| 设计文档 | `<project-docs>/mnemosyne_v2.1_timem_architecture.md` |
 
 ## API 端点
 
