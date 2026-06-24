@@ -1,7 +1,16 @@
 # 🏰 Mnemosyne · 记忆宫殿
 
+> ⚠️ **项目迁移通知 (2026-06-25)**
+> 
+> **本项目已正式立项为独立产品 "Mnemosyne OS v5.0"，搬迁至独立仓库维护。**
+> 
+> 🔗 **新仓库:** [github.com/gymaira1990-jpg/Mnemosyne-OS](https://github.com/gymaira1990-jpg/Mnemosyne-OS)
+> 
+> **本目录 (02-Mnemosyne-记忆宫殿) 不再更新。** 所有后续开发、版本发布、文档更新请在 Mnemosyne OS 独立仓库进行。
+>
+> ---
+>
 > Noah 认知架构的永久记忆子系统
-> **位置:** noah-gen3-type2 / 02-Mnemosyne-记忆宫殿
 
 ## 概述
 
