@@ -11,8 +11,10 @@ from pathlib import Path
 from datetime import datetime
 
 PRIME_ROOT = Path(__file__).parent
+import os
+
 DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
-DEEPSEEK_API_KEY = "sk-your-deepseek-api-key"
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 
 
 class ContextEngine:

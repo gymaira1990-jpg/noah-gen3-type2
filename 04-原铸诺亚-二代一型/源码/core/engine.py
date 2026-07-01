@@ -8,8 +8,10 @@
 import json, httpx
 from typing import Optional
 
+import os
+
 DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
-DEEPSEEK_API_KEY = "sk-your-deepseek-api-key"
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 
 # 默认模型配置
 DEFAULT_MODEL = "deepseek-v4-flash"
