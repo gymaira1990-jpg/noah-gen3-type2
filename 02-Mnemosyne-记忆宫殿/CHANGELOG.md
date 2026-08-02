@@ -120,8 +120,8 @@ Provider: 11 tools (search/remember/recall/tree/hot/dialectic/tiered/conflicts/w
   - 效果：`POST /api/v1/memories/search` 恢复正常，返回 20 条语义搜索结果
 
 - **SSH 隧道缺 `-R 11435`** 🔴
-  - 根因：`start-gz-tunnels.sh` 没设 `-p 2222`，@reboot 启动时连接失败；WSL 重启后 -R 11435 一直未建立
-  - 修复：脚本加 `-p 2222`，去 `ExitOnForwardFailure` 避免单端口失败连锁反应
+  - 根因：`start-gz-tunnels.sh` 没设 `-p <ssh-port>`，@reboot 启动时连接失败；WSL 重启后 -R 11435 一直未建立
+  - 修复：脚本加 `-p <ssh-port>`，去 `ExitOnForwardFailure` 避免单端口失败连锁反应
   - 效果：GZ 可调 WSL GPU LLM，TMT 蒸馏不再降级到 CPU fallback
 
 - **TMT cron 脚本路径错误** 🟡
